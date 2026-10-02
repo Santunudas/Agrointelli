@@ -16,6 +16,7 @@ all 38 plant-disease classes from AgroIntelli, plus everyday farmer issues:
 import os
 import re
 import json
+import datetime
 import urllib.request
 import urllib.error
 from typing import Dict, List, Optional, Any, Tuple
@@ -24,19 +25,27 @@ from typing import Dict, List, Optional, Any, Tuple
 class AgroBotEngine:
     """Bilingual offline/hybrid agronomy chatbot engine."""
 
+    # Pre-compiled regex for performance
+    _BANGLA_RE = re.compile(r"[\u0980-\u09FF]")
+    _WORD_RE = re.compile(r"\b[\w\u0980-\u09FF]+\b")
+
     def __init__(self):
         self.kb = self._build_knowledge_base()
         self.disease_class_map = self._build_disease_class_map()
         self.crop_aliases = self._build_crop_aliases()
         self.problem_keywords = self._build_problem_keywords()
+        # Pre-build flattened keyword sets for fast out-of-scope detection
+        self._all_agri_keywords = self._build_agri_keyword_set()
+        # Edge-case keyword patterns
+        self._edge_case_patterns = self._build_edge_case_patterns()
 
     # -------------------------------------------------------------------------
     # Language Detection & Helpers
     # -------------------------------------------------------------------------
-    @staticmethod
-    def contains_bangla(text: str) -> bool:
+    @classmethod
+    def contains_bangla(cls, text: str) -> bool:
         """Check if string contains Bengali script characters (U+0980 to U+09FF)."""
-        return bool(re.search(r"[\u0980-\u09FF]", text))
+        return bool(cls._BANGLA_RE.search(text))
 
     def detect_language(self, text: str, user_pref: Optional[str] = None) -> str:
         """Determine language ('bn' for Bangla, 'en' for English)."""
@@ -52,7 +61,7 @@ class AgroBotEngine:
             "pani", "mati", "jomi", "gach", "pata", "pokamakor", "dusta", "potash"
         ]
         text_lower = text.lower()
-        words = re.findall(r"\b\w+\b", text_lower)
+        words = self._WORD_RE.findall(text_lower)
         banglish_matches = sum(1 for w in words if w in banglish_indicators)
         if banglish_matches >= 2:
             return "bn"
@@ -891,6 +900,221 @@ class AgroBotEngine:
         }
 
     # -------------------------------------------------------------------------
+    # Edge-Case Pattern Builder
+    # -------------------------------------------------------------------------
+    def _build_edge_case_patterns(self) -> Dict[str, List[str]]:
+        """Keywords that trigger edge-case (non-agri utility) responses."""
+        return {
+            "time": [
+                "what time", "current time", "time now", "whats the time", "what's the time",
+                "tell me the time", "show time", "what is the time", "কয়টা বাজে",
+                "সময় কত", "এখন কয়টা", "টাইম কত", "time koto", "koyota baje"
+            ],
+            "date": [
+                "what date", "today's date", "todays date", "current date", "what is the date",
+                "date today", "today date", "আজকে কত তারিখ", "আজকের তারিখ",
+                "তারিখ কত", "date koto", "aj ki tarikh", "what day is it", "what day is today",
+                "আজ কি বার", "আজকে কোন দিন"
+            ],
+            "year": [
+                "what year", "current year", "which year", "কোন সাল", "বর্তমান সাল",
+                "this year", "কত সাল"
+            ],
+            "month": [
+                "what month", "current month", "which month", "কোন মাস", "এই মাস",
+                "this month"
+            ],
+        }
+
+    # -------------------------------------------------------------------------
+    # Aggregated Agricultural Keywords for Scope Detection
+    # -------------------------------------------------------------------------
+    def _build_agri_keyword_set(self) -> set:
+        """Build a flat set of all agriculture-related keywords for fast scope check."""
+        keywords = set()
+        # From problem_keywords
+        for category_words in self.problem_keywords.values():
+            keywords.update(w.lower() for w in category_words)
+        # From KB
+        for item in self.kb:
+            keywords.update(w.lower() for w in item.get("keywords_en", []))
+            keywords.update(w for w in item.get("keywords_bn", []))
+            keywords.update(c.lower() for c in item.get("crops", []))
+        # From crop aliases
+        for aliases in self.crop_aliases.values():
+            keywords.update(a.lower() for a in aliases)
+        # From disease class map
+        for cls_name in self.disease_class_map:
+            parts = cls_name.lower().replace("___", " ").replace("_", " ").split()
+            keywords.update(p for p in parts if len(p) > 2)
+        # Common agri words
+        keywords.update([
+            "crop", "farm", "farming", "field", "harvest", "seed", "sow", "plant",
+            "garden", "organic", "compost", "mulch", "greenhouse", "nursery",
+            "ফসল", "চাষ", "জমি", "বীজ", "গাছ", "ক্ষেত", "কৃষি", "বাগান"
+        ])
+        return keywords
+
+    # -------------------------------------------------------------------------
+    # Edge-Case Handler (Time, Date, Day, Year, Month)
+    # -------------------------------------------------------------------------
+    def _handle_edge_cases(self, query: str, lang: str) -> Optional[Dict[str, Any]]:
+        """Handle utility queries like time, date, day, year, month."""
+        q = query.lower()
+        now = datetime.datetime.now()
+        is_bn = (lang == "bn")
+
+        # --- TIME ---
+        if any(kw in q for kw in self._edge_case_patterns["time"]):
+            time_str = now.strftime("%I:%M %p")
+            if is_bn:
+                # Translate AM/PM
+                period = "সকাল" if now.hour < 12 else ("দুপুর" if now.hour < 17 else "সন্ধ্যা" if now.hour < 20 else "রাত")
+                reply = f"🕐 এখন সময় **{time_str}** ({period})।\n\nআপনার ফসল সম্পর্কে কিছু জানতে চাইলে নিচের বাটন চাপুন বা প্রশ্ন করুন!"
+            else:
+                reply = f"🕐 The current time is **{time_str}**.\n\nFeel free to ask me any agriculture-related question!"
+            return self._edge_case_response(reply, lang, "Utility")
+
+        # --- DATE ---
+        if any(kw in q for kw in self._edge_case_patterns["date"]):
+            # Also check for "what day" queries
+            day_name_en = now.strftime("%A")
+            date_str_en = now.strftime("%d %B %Y")
+            bn_days = {"Monday": "সোমবার", "Tuesday": "মঙ্গলবার", "Wednesday": "বুধবার",
+                       "Thursday": "বৃহস্পতিবার", "Friday": "শুক্রবার", "Saturday": "শনিবার", "Sunday": "রবিবার"}
+            bn_months = {"January": "জানুয়ারি", "February": "ফেব্রুয়ারি", "March": "মার্চ",
+                         "April": "এপ্রিল", "May": "মে", "June": "জুন", "July": "জুলাই",
+                         "August": "আগস্ট", "September": "সেপ্টেম্বর", "October": "অক্টোবর",
+                         "November": "নভেম্বর", "December": "ডিসেম্বর"}
+            if is_bn:
+                day_bn = bn_days.get(day_name_en, day_name_en)
+                month_bn = bn_months.get(now.strftime("%B"), now.strftime("%B"))
+                reply = f"📅 আজকের তারিখ: **{now.day} {month_bn} {now.year}** ({day_bn})।\n\nআপনার ফসলের কোনো সমস্যা থাকলে জিজ্ঞাসা করুন!"
+            else:
+                reply = f"📅 Today is **{day_name_en}, {date_str_en}**.\n\nNeed help with your crops? Just ask!"
+            return self._edge_case_response(reply, lang, "Utility")
+
+        # --- YEAR ---
+        if any(kw in q for kw in self._edge_case_patterns["year"]):
+            if is_bn:
+                reply = f"📆 বর্তমান সাল: **{now.year}**।\n\nআপনার কৃষি সংক্রান্ত কোনো প্রশ্ন থাকলে জানান!"
+            else:
+                reply = f"📆 The current year is **{now.year}**.\n\nAsk me anything about farming!"
+            return self._edge_case_response(reply, lang, "Utility")
+
+        # --- MONTH ---
+        if any(kw in q for kw in self._edge_case_patterns["month"]):
+            bn_months = {"January": "জানুয়ারি", "February": "ফেব্রুয়ারি", "March": "মার্চ",
+                         "April": "এপ্রিল", "May": "মে", "June": "জুন", "July": "জুলাই",
+                         "August": "আগস্ট", "September": "সেপ্টেম্বর", "October": "অক্টোবর",
+                         "November": "নভেম্বর", "December": "ডিসেম্বর"}
+            month_en = now.strftime("%B")
+            if is_bn:
+                month_bn = bn_months.get(month_en, month_en)
+                reply = f"📆 বর্তমান মাস: **{month_bn} {now.year}**।\n\nএই মাসে আপনার ফসলের যত্ন সম্পর্কে জানতে প্রশ্ন করুন!"
+            else:
+                reply = f"📆 The current month is **{month_en} {now.year}**.\n\nAsk me about seasonal crop care for this month!"
+            return self._edge_case_response(reply, lang, "Utility")
+
+        return None
+
+    def _edge_case_response(self, reply: str, lang: str, category: str) -> Dict[str, Any]:
+        """Build a standardized response for edge-case utility queries."""
+        is_bn = (lang == "bn")
+        return {
+            "ok": True,
+            "reply": reply,
+            "language": lang,
+            "category": category,
+            "thinking_delay": 2000,
+            "suggestions": [
+                "ধানের মাজরা পোকা দমন" if is_bn else "Rice stem borer remedies",
+                "আলুর নাবি ধসা রোগ" if is_bn else "Potato late blight control",
+                "সারের সঠিক মাত্রা" if is_bn else "Fertilizer dosage guide",
+            ],
+            "helpline": "1800-180-1551 (IN) / 16123 (BD)"
+        }
+
+    # -------------------------------------------------------------------------
+    # Out-of-Scope Detector
+    # -------------------------------------------------------------------------
+    def _is_out_of_scope(self, query: str, lang: str) -> Optional[Dict[str, Any]]:
+        """Detect non-agricultural complex questions and politely deflect."""
+        q = query.lower()
+        words = set(self._WORD_RE.findall(q))
+        is_bn = (lang == "bn")
+
+        # Check if query has ANY agriculture-related keyword
+        has_agri_keyword = bool(words & self._all_agri_keywords) or any(
+            kw in q for kw in self._all_agri_keywords if len(kw) > 3
+        )
+
+        if has_agri_keyword:
+            return None  # Likely agriculture-related, don't block
+
+        # Non-agri topics: coding, math, politics, entertainment, general knowledge, etc.
+        out_of_scope_markers = [
+            # English
+            "who is the president", "who is the prime minister", "capital of",
+            "code", "programming", "python", "javascript", "java", "html", "css",
+            "write a program", "write code", "algorithm", "data structure",
+            "movie", "song", "music", "actor", "actress", "cricket", "football",
+            "recipe", "cook", "bake",
+            "math", "equation", "solve", "calculate", "algebra", "calculus",
+            "history", "geography", "physics", "chemistry", "biology",
+            "stock market", "bitcoin", "crypto", "investment",
+            "love", "relationship", "joke", "story", "poem",
+            "translate", "meaning of", "define", "definition",
+            "who invented", "who discovered", "who won",
+            "how tall", "how old", "net worth", "salary",
+            "what is ai", "what is machine learning", "what is blockchain",
+            "write an essay", "write a letter", "summarize", "explain quantum",
+            # Bangla non-agri
+            "গান", "সিনেমা", "রান্না", "রেসিপি", "ক্রিকেট", "ফুটবল",
+            "গণিত", "অঙ্ক", "কবিতা", "গল্প", "কোড", "প্রোগ্রামিং",
+            "রাজধানী", "প্রধানমন্ত্রী", "রাষ্ট্রপতি",
+        ]
+
+        if any(marker in q for marker in out_of_scope_markers):
+            if is_bn:
+                reply = (
+                    "🙏 দুঃখিত, আমি এই বিষয়ে প্রশিক্ষিত নই।\n\n"
+                    "আমি **এগ্রো মিত্র (AgroBot)** — শুধুমাত্র কৃষি ও ফসল সম্পর্কিত সমস্যার সমাধান দিতে পারি। "
+                    "যেমন:\n"
+                    "- 🐛 পোকা দমন ও রোগ প্রতিকার\n"
+                    "- 🧪 সার প্রয়োগের সঠিক মাত্রা\n"
+                    "- 💧 সেচ ব্যবস্থাপনা\n"
+                    "- 🌿 জৈব বালাইনাশক তৈরি\n\n"
+                    "আপনার ফসলের সমস্যা নিয়ে প্রশ্ন করুন, আমি সাহায্য করতে প্রস্তুত! 🌾"
+                )
+            else:
+                reply = (
+                    "🙏 Sorry, I am not trained for that kind of question.\n\n"
+                    "I am **AgroBot** — a specialized agricultural assistant. I can only help with:\n"
+                    "- 🐛 Pest control & disease management\n"
+                    "- 🧪 Fertilizer dosage & application\n"
+                    "- 💧 Irrigation & water management\n"
+                    "- 🌿 Organic farming & bio-pesticides\n\n"
+                    "You can try asking about your crop problems — I'm here to help! 🌾"
+                )
+            return {
+                "ok": True,
+                "reply": reply,
+                "language": lang,
+                "category": "Out of Scope",
+                "thinking_delay": 2000,
+                "suggestions": [
+                    "ধানের মাজরা পোকা দমন" if is_bn else "Rice stem borer remedies",
+                    "আলুর নাবি ধসা রোগ" if is_bn else "Potato late blight control",
+                    "সারের সঠিক মাত্রা" if is_bn else "Fertilizer dosage guide",
+                    "কিষাণ হেল্পলাইন নম্বর" if is_bn else "Farmer helpline numbers"
+                ],
+                "helpline": "1800-180-1551 (IN) / 16123 (BD)"
+            }
+
+        return None
+
+    # -------------------------------------------------------------------------
     # Core Answering Logic
     # -------------------------------------------------------------------------
     def answer_query(
@@ -911,30 +1135,46 @@ class AgroBotEngine:
         ]):
             diag_resp = self._handle_diagnosis_context(diagnosis_context, lang)
             if diag_resp:
+                diag_resp["thinking_delay"] = 2000
                 return diag_resp
 
         # 2. General greetings
         greeting_resp = self._check_greetings(q_lower, lang)
         if greeting_resp:
+            greeting_resp["thinking_delay"] = 2000
             return greeting_resp
 
-        # 3. Check direct 38-class name match in query
+        # 3. Edge-case utility queries (time, date, day, year, month)
+        edge_resp = self._handle_edge_cases(q_lower, lang)
+        if edge_resp:
+            return edge_resp
+
+        # 4. Out-of-scope detection (non-agriculture questions)
+        oos_resp = self._is_out_of_scope(q_lower, lang)
+        if oos_resp:
+            return oos_resp
+
+        # 5. Check direct 38-class name match in query
         class_match_resp = self._match_disease_class(q_lower, lang)
         if class_match_resp:
+            class_match_resp["thinking_delay"] = 2000
             return class_match_resp
 
-        # 4. Match against Knowledge Base items
+        # 6. Match against Knowledge Base items
         best_item, score = self._find_best_match(q_lower, diagnosis_context)
         if best_item and score >= 2:
-            return self._format_kb_response(best_item, lang)
+            resp = self._format_kb_response(best_item, lang)
+            resp["thinking_delay"] = 2000
+            return resp
 
-        # 5. Fallback to diagnosis context if present
+        # 7. Fallback to diagnosis context if present
         if diagnosis_context:
             diag_resp = self._handle_diagnosis_context(diagnosis_context, lang)
             if diag_resp:
+                diag_resp["thinking_delay"] = 2000
                 return diag_resp
 
-        # 6. Optional LLM invocation if an API key is available
+        # 8. Optional LLM invocation if an API key is available
         llm_reply = self._try_llm_generation(query, lang)
         if llm_reply:
             return {
@@ -942,6 +1182,7 @@ class AgroBotEngine:
                 "reply": llm_reply,
                 "language": lang,
                 "category": "Expert AI Advisory",
+                "thinking_delay": 2000,
                 "suggestions": [
                     "ধানের মাজরা পোকা দমন" if lang == "bn" else "Rice stem borer remedies",
                     "আলুর নাবি ধসা রোগ" if lang == "bn" else "Potato late blight control",
@@ -951,8 +1192,10 @@ class AgroBotEngine:
                 "helpline": "1800-180-1551 (IN) / 16123 (BD)"
             }
 
-        # 7. Smart Fallback with guidance and quick prompts
-        return self._build_smart_fallback(query, lang)
+        # 9. Smart Fallback with guidance and quick prompts
+        resp = self._build_smart_fallback(query, lang)
+        resp["thinking_delay"] = 2000
+        return resp
 
     # -------------------------------------------------------------------------
     # Optional LLM Fallback (Gemini or Groq)
@@ -1100,7 +1343,8 @@ class AgroBotEngine:
     def _find_best_match(self, query: str, context: Optional[str]) -> Tuple[Optional[Dict[str, Any]], int]:
         best_item = None
         max_score = 0
-        words = set(re.findall(r"\b[\w\u0980-\u09FF]+\b", query))
+        words = set(self._WORD_RE.findall(query))
+        context_lower = context.lower() if context else None
 
         for item in self.kb:
             score = 0
@@ -1112,25 +1356,29 @@ class AgroBotEngine:
                         break
 
             for kw in item.get("keywords_en", []):
-                if kw.lower() in query:
+                kw_low = kw.lower()
+                if kw_low in query:
                     score += 4
-                elif any(w == kw.lower() for w in words):
+                elif kw_low in words:
                     score += 2
 
             for kw in item.get("keywords_bn", []):
                 if kw in query:
                     score += 5
-                elif any(w == kw for w in words):
+                elif kw in words:
                     score += 3
 
-            if context and item.get("crops"):
+            if context_lower and item.get("crops"):
                 for c in item["crops"]:
-                    if c.lower() in context.lower():
+                    if c.lower() in context_lower:
                         score += 2
 
             if score > max_score:
                 max_score = score
                 best_item = item
+                # Early exit for very high confidence matches
+                if max_score >= 12:
+                    break
 
         return best_item, max_score
 
@@ -1181,7 +1429,7 @@ class AgroBotEngine:
     def _check_greetings(self, query: str, lang: str) -> Optional[Dict[str, Any]]:
         greet_bn = ["নমস্কার", "সালাম", "হ্যালো", "কেমন আছো", "কেমন আছেন", "ধন্যবাদ", "হাই", "কেমন আছ"]
         greet_en = ["hello", "hi", "hey", "good morning", "good evening", "assalamu alaikum", "namaste", "thank you", "thanks"]
-        words = set(re.findall(r"\b[\w\u0980-\u09FF]+\b", query))
+        words = set(self._WORD_RE.findall(query))
 
         is_bn_greet = any(w in words for w in greet_bn) or any(g in query for g in greet_bn)
         is_en_greet = any(w in words for w in greet_en)

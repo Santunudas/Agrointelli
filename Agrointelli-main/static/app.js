@@ -370,13 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update placeholder
         if (lang === 'bn') {
             chatInput.placeholder = "এখানে আপনার কৃষিকাজের সমস্যা বাংলায় লিখুন...";
-            typingText.innerText = "এগ্রো মিত্র সমাধান খুঁজছে...";
+            typingText.innerText = "এগ্রো মিত্র ভাবছে...";
         } else if (lang === 'en') {
             chatInput.placeholder = "Ask your farming question in English...";
-            typingText.innerText = "AgroBot is finding agricultural advice...";
+            typingText.innerText = "AgroBot is thinking...";
         } else {
             chatInput.placeholder = "Ask your farming problem in English or বাংলা...";
-            typingText.innerText = "Finding agricultural advice / পরামর্শ খোঁজা হচ্ছে...";
+            typingText.innerText = "Thinking / ভাবছে...";
         }
 
         renderQuickTopics();
@@ -766,6 +766,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Thinking text phase cycler
+    let thinkingInterval = null;
+    function startThinkingAnimation() {
+        const isBn = (chatLanguage === 'bn');
+        const phases = isBn
+            ? ["এগ্রো মিত্র ভাবছে...", "তথ্যভাণ্ডারে খোঁজা হচ্ছে...", "সমাধান প্রস্তুত করছে..."]
+            : ["AgroBot is thinking...", "Searching knowledge base...", "Preparing expert advice..."];
+        let idx = 0;
+        typingText.innerText = phases[0];
+        thinkingInterval = setInterval(() => {
+            idx = (idx + 1) % phases.length;
+            typingText.innerText = phases[idx];
+        }, 700);
+    }
+
+    function stopThinkingAnimation() {
+        if (thinkingInterval) {
+            clearInterval(thinkingInterval);
+            thinkingInterval = null;
+        }
+    }
+
     // 11. Form Submit Handler
     async function handleUserSendMessage(userText) {
         const text = (userText || chatInput.value).trim();
@@ -775,9 +797,12 @@ document.addEventListener('DOMContentLoaded', () => {
         adjustTextareaHeight();
         appendUserMessage(text);
 
-        // Show typing indicator
+        // Show thinking indicator with animated text phases
         chatTypingIndicator.classList.remove('hidden');
+        startThinkingAnimation();
         scrollChatToBottom();
+
+        const thinkingStartTime = Date.now();
 
         try {
             const response = await fetch('/chat', {
@@ -795,11 +820,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
+
+            // Enforce minimum thinking delay (2 seconds) for attention span
+            const thinkingDelay = data.thinking_delay || 2000;
+            const elapsed = Date.now() - thinkingStartTime;
+            const remaining = Math.max(0, thinkingDelay - elapsed);
+
+            if (remaining > 0) {
+                await new Promise(resolve => setTimeout(resolve, remaining));
+            }
+
+            stopThinkingAnimation();
             chatTypingIndicator.classList.add('hidden');
             appendBotMessage(data);
 
         } catch (error) {
             console.error('Chat error:', error);
+
+            // Still enforce a small delay on error for consistency
+            const elapsed = Date.now() - thinkingStartTime;
+            const remaining = Math.max(0, 1500 - elapsed);
+            if (remaining > 0) {
+                await new Promise(resolve => setTimeout(resolve, remaining));
+            }
+
+            stopThinkingAnimation();
             chatTypingIndicator.classList.add('hidden');
             appendBotMessage({
                 reply: (chatLanguage === 'bn')

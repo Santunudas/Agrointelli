@@ -1508,24 +1508,48 @@ input:checked + .slider:before {
     border-color: #10b981;
 }
 
-/* Typing Indicator */
+/* Thinking / Typing Indicator */
 .chat-typing-indicator {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 18px;
-    background: rgba(240, 253, 244, 0.85);
-    border-top: 1px solid rgba(16, 185, 129, 0.1);
-    font-size: 12px;
+    gap: 10px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, rgba(240, 253, 244, 0.95), rgba(220, 252, 231, 0.85));
+    border-top: 1px solid rgba(16, 185, 129, 0.15);
+    font-size: 13px;
     color: var(--text-secondary);
+    animation: thinking-fade-in 0.3s ease-out;
+}
+
+@keyframes thinking-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.thinking-brain {
+    font-size: 18px;
+    color: #10b981;
+    animation: brain-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes brain-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
+
+.thinking-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .typing-dot {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: #10b981;
-    animation: typing-jump 1.2s infinite ease-in-out;
+    background: linear-gradient(135deg, #10b981, #059669);
+    animation: typing-bounce 1.4s infinite ease-in-out;
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.3);
 }
 
 .typing-dot:nth-child(2) {
@@ -1536,13 +1560,30 @@ input:checked + .slider:before {
     animation-delay: 0.4s;
 }
 
-@keyframes typing-jump {
+@keyframes typing-bounce {
     0%, 80%, 100% {
-        transform: translateY(0);
+        transform: scale(0.6);
+        opacity: 0.4;
     }
     40% {
-        transform: translateY(-5px);
+        transform: scale(1);
+        opacity: 1;
     }
+}
+
+.typing-text {
+    font-weight: 500;
+    background: linear-gradient(90deg, #065f46, #10b981, #065f46);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: thinking-shimmer 2s linear infinite;
+}
+
+@keyframes thinking-shimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
 }
 
 /* Chat Input Bar */
