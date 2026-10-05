@@ -339,539 +339,76 @@ class AgroBotEngine:
     # Comprehensive Bilingual Agronomy Knowledge Base
     # -------------------------------------------------------------------------
     def _build_knowledge_base(self) -> List[Dict[str, Any]]:
-        return [
-            # 1. Rice Stem Borer
-            {
-                "id": "rice_stem_borer",
-                "category": "Pest Management",
-                "crops": ["rice", "paddy"],
-                "keywords_en": ["stem borer", "yellow stem borer", "dead heart", "white earhead", "rice worm", "rice pest", "borer"],
-                "keywords_bn": ["মাজরা", "মাজরা পোকা", "মরা ডিগ", "সাদা শিষ", "ধানের পোকা", "শীষ শুকিয়ে", "মাঝরা"],
-                "title_en": "🌾 Rice Yellow Stem Borer (Scirpophaga incertulas)",
-                "title_bn": "🌾 ধানের মাজরা পোকা দমন ব্যবস্থাপনা",
-                "summary_en": "Stem borer larvae bore into rice stems. In early stages, the central shoot dies ('Dead Heart'). During flowering, it causes empty, pale white earheads ('Whitehead').",
-                "summary_bn": "মাজরা পোকার কীড়া ধানের কাণ্ডের ভেতরে ঢুকে ভিতরের অংশ খেয়ে ফেলে। কুশি অবস্থায় 'মরা ডিগ' বা ডেডহার্ট এবং শিষ বের হওয়ার সময় সাদা ফাঁপা শিষ বা 'হোয়াইট হেড' দেখা যায়।",
-                "organic_en": [
-                    "Install Pheromone Traps @ 8 traps/acre to trap and kill male moths.",
-                    "Release Trichogramma japonicum egg parasitoid cards @ 20,000 eggs/acre at 7-10 day intervals.",
-                    "Perch T-shaped bamboo sticks (১০-১৫ টি প্রতি বিঘায়) for predatory birds to sit and eat adult moths.",
-                    "Spray Neem Oil (5ml/L of water with soap) at initial moth appearance."
-                ],
-                "organic_bn": [
-                    "বিঘা প্রতি ৩-৪টি ফেরোমন ফাঁদ (Pheromone Trap) স্থাপন করে পুরুষ মথ ধ্বংস করুন।",
-                    "ক্ষেতে ডালপালা বা টি-আকৃতির বাঁশের কঞ্চি (প্রতি বিঘায় ১০-১২টি) পুঁতে দিন যেন শিকারী পাখিরা বসে পোকা খেতে পারে।",
-                    "প্রাথমিক অবস্থায় নিম তেল (প্রতি লিটার জলে ৫ মিলি ও সামান্য সাবান জল) স্প্রে করুন।",
-                    "ট্রাইকোগ্রামা পরজীবী ডিমের কার্ড ব্যবহার করুন।"
-                ],
-                "chemical_en": [
-                    "If economic threshold level (ETL > 5% dead hearts) is crossed: Apply Cartap Hydrochloride 4G @ 10 kg/acre OR Chlorantraniliprole 0.4% G @ 4 kg/acre in standing water.",
-                    "Foliar spray: Chlorantraniliprole 18.5% SC @ 0.3 ml/L or Flubendiamide 39.35% SC @ 0.2 ml/L of water."
-                ],
-                "chemical_bn": [
-                    "ক্ষতির মাত্রা ৫% এর বেশি হলে: কার্টাপ হাইড্রোক্লোরাইড ৪জি (Cartap 4G) বিঘা প্রতি ৩-৩.৫ কেজি অথবা ক্লোরান্ট্রানিলিপ্রোল ০.৪জি জমিতে ছিটান।",
-                    "স্প্রে করার জন্য: কোরাজেন (Chlorantraniliprole 18.5% SC) প্রতি লিটার জলে ০.৩ মিলি অথবা ফ্লুবেন্ডিয়ামাইড প্রতি লিটার জলে ০.২ মিলি মিশিয়ে স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Brown planthopper in rice", "Rice blast disease", "Rice fertilizer schedule"],
-                "suggestions_bn": ["ধানের কারেন্ট পোকা / বাদামী গাছফড়িং", "ধানের ব্লাস্ট রোগ প্রতিকার", "ধানের সারের সঠিক মাত্রা"]
-            },
+        """Load and validate the versioned, source-aware knowledge dataset."""
+        data_path = os.path.join(os.path.dirname(__file__), "data", "agrobot_knowledge.json")
+        with open(data_path, encoding="utf-8") as knowledge_file:
+            dataset = json.load(knowledge_file)
 
-            # 2. Rice Blast Disease
-            {
-                "id": "rice_blast",
-                "category": "Disease Control",
-                "crops": ["rice", "paddy"],
-                "keywords_en": ["blast", "rice blast", "neck blast", "leaf blast", "magnaporthe", "spindle shaped spots"],
-                "keywords_bn": ["ব্লাস্ট", "ধানের ব্লাস্ট", "নেক ব্লাস্ট", "পাতা ব্লাস্ট", "ঘাড় পচা", "ধানের ছত্রাক"],
-                "title_en": "🌾 Rice Blast Disease (Pyricularia oryzae)",
-                "title_bn": "🌾 ধানের ব্লাস্ট রোগ (পাতা ও নেক ব্লাস্ট) প্রতিকার",
-                "summary_en": "Fungal disease causing diamond or spindle-shaped eye-like lesions with gray centers on leaves. At heading stage, it attacks the neck node of the panicle ('Neck Blast'), causing breaking and unfilled grains.",
-                "summary_bn": "এটি ধানের মারাত্মক ছত্রাকজনিত রোগ। পাতার ওপর চোখের মতো দুই প্রান্ত চোখা ও মাঝখানটা ছাই রঙের দাগ হয়। শিষের গোড়ায় আক্রমণ হলে (নেক ব্লাস্ট) শিষ কালো হয়ে ভেঙে পড়ে এবং ধান চিটা হয়ে যায়।",
-                "organic_en": [
-                    "Avoid excessive application of Urea (Nitrogen) fertilizer; apply Potash in split doses.",
-                    "Keep water level at 2-3 inches in field continuously during early outbreak.",
-                    "Treat seeds with Trichoderma viride @ 5-10g/kg seed before nursery sowing."
-                ],
-                "organic_bn": [
-                    "জমিতে অতিরিক্ত ইউরিয়া সার প্রয়োগ একদম বন্ধ রাখুন; ইউরিয়া বেশি দিলে ব্লাস্টের প্রকোপ দ্রুত বাড়ে।",
-                    "জমিতে পর্যাপ্ত পানি ধরে রাখুন; জমি শুকিয়ে গেলে রোগের আক্রমণ বাড়ে।",
-                    "পটাশ সার দুই কিস্তিতে ভাগ করে দিন, এতে ধানের রোগ প্রতিরোধ ক্ষমতা বাড়ে।",
-                    "বীজতলায় বোনার আগে ট্রাইকোডার্মা দিয়ে বীজ শোধন করুন।"
-                ],
-                "chemical_en": [
-                    "At first notice of leaf blast: Spray Tricyclazole 75% WP @ 0.6 g/L water (e.g. Beam / Baan).",
-                    "Alternative: Isoprothiolane 40% EC (Fujione) @ 1.5 ml/L water OR Kasugamycin 3% SL @ 2 ml/L water.",
-                    "For Neck Blast: Spray once at booting/late heading and once after 50% flowering late afternoon."
-                ],
-                "chemical_bn": [
-                    "পাতায় দাগ দেখামাত্র: ট্রাইসাইক্লাজোল ৭৫% ডব্লিউপি (যেমন ট্রুপার বা বিম) প্রতি লিটার জলে ০.৬ গ্রাম মিশিয়ে স্প্রে করুন।",
-                    "বিকল্প ঔষধ: আইসোপ্রোথিওলেন ৪০% ইসি (ফুজিয়ন) প্রতি লিটার জলে ১.৫ মিলি অথবা কাসুগামাইসিন ২ মিলি/লিটার।",
-                    "নেক ব্লাস্ট রোধে ধান থোড় অবস্থায় একবার এবং শিষ বের হলে বিকেলে আরেকবার স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Rice fertilizer dosage", "Bacterial leaf blight in rice", "Rice stem borer"],
-                "suggestions_bn": ["ধানের ইউরিয়া ও পটাশ সার প্রয়োগ", "ধানের ব্যাকটেরিয়াল পাতা পোড়া রোগ", "ধানের মাজরা পোকা দমন"]
-            },
+        if not isinstance(dataset, dict):
+            raise ValueError("AgroBot knowledge base root must be an object")
+        if type(dataset.get("schema_version")) is not int or dataset["schema_version"] != 1:
+            raise ValueError("Unsupported AgroBot knowledge base schema version")
+        if not isinstance(dataset.get("dataset_version"), str) or not dataset["dataset_version"].strip():
+            raise ValueError("AgroBot knowledge base must have a dataset_version")
+        if not isinstance(dataset.get("target_geography"), str) or not dataset["target_geography"].strip():
+            raise ValueError("AgroBot knowledge base must have a target_geography")
 
-            # 3. Rice Brown Planthopper (BPH / Current Poka)
-            {
-                "id": "rice_bph",
-                "category": "Pest Management",
-                "crops": ["rice", "paddy"],
-                "keywords_en": ["brown planthopper", "bph", "current poka", "hopper burn", "nilaparvata"],
-                "keywords_bn": ["কারেন্ট পোকা", "বাদামী গাছফড়িং", "বিপিএইচ", "গাছফড়িং", "হপার বার্ন", "ধানের রস চোষা পোকা"],
-                "title_en": "🌾 Rice Brown Planthopper (BPH / Current Poka)",
-                "title_bn": "🌾 ধানের বাদামী গাছফড়িং (কারেন্ট পোকা) দমন",
-                "summary_en": "BPH congregates at the base of rice tillers and sucks sap, turning circular patches of the crop dry and golden-brown like burnt grass ('Hopper Burn'). It spreads like wildfire ('current').",
-                "summary_bn": "এই পোকা ধানের গোড়ায় দলবেঁধে বসে রস চুষে খায়। ফলে গাছ পুড়ে যাওয়ার মতো সোনালী-বাদামী হয়ে শুকিয়ে গোল গোল দাগে মরে যায় (হপার বার্ন)। খুব দ্রুত পুরো জমিতে ছড়িয়ে পড়ে বলে একে 'কারেন্ট পোকা' বলে।",
-                "organic_en": [
-                    "Practice 'Alley Farming' (বিলি কাটা) — leave an 8-10 inch empty row after every 10-12 rows for sunlight and aeration.",
-                    "Drain standing water from the field completely for 3-4 days to disturb insect breeding.",
-                    "Avoid broad-spectrum synthetic pyrethroids (like cypermethrin) which kill natural spiders that eat hoppers."
-                ],
-                "organic_bn": [
-                    "বিলি বা 'আলি' পদ্ধতি: ধানের জমিতে প্রতি ১০-১২ সারি পর পর এক হাত ফাঁকা রাখুন যেন আলো-বাতাস ধানের গোড়া পর্যন্ত পৌঁছাতে পারে।",
-                    "জমির পানি ৩-৪ দিনের জন্য পুরোপুরি বের করে দিয়ে জমি শুকিয়ে নিন, এতে পোকা দ্রুত মারা যায়।",
-                    "সাইপারমেথ্রিন জাতীয় ঔষধ স্প্রে করবেন না, কারণ এতে উপকারী মাকড়সা মারা যায় এবং কারেন্ট পোকা বহুগুণ বেড়ে যায়।"
-                ],
-                "chemical_en": [
-                    "Direct spray at the BASE OF THE PLANTS (not top canopy):",
-                    "Pymetrozine 50% WDG (Chess) @ 0.6 g/L water OR Dinotefuran 20% SG (Token) @ 0.4 g/L water.",
-                    "Alternative: Triflumezopyrim 10% SC (Pexalon) @ 0.5 ml/L water (very effective long-lasting control)."
-                ],
-                "chemical_bn": [
-                    "ঔষধ স্প্রে করার সময় নজেল ধানের গোড়ার দিকে তাক করে স্প্রে করতে হবে:",
-                    "পাইমেট্রোজিন ৫০% ডব্লিউডিজি (যেমন চেস) প্রতি লিটার জলে ০.৬ গ্রাম অথবা ডিনোটেফিউরান ২০% এসজি (টোকেন) ০.৪ গ্রাম/লিটার।",
-                    "পেক্সালন (Triflumezopyrim 10% SC) প্রতি বিঘায় ২৩ মিলি (প্রতি লিটারে ০.৫ মিলি) প্রয়োগ করলে দীর্ঘমেয়াদী চমৎকার ফল মেলে।"
-                ],
-                "suggestions_en": ["Alternate Wetting & Drying (AWD)", "Rice stem borer", "Pesticide safety tips"],
-                "suggestions_bn": ["পর্যায়ক্রমিক ভেজানো ও শুকানো (AWD) পদ্ধতি", "ধানের মাজরা পোকা", "কীটনাশক ব্যবহারের সতর্কতা"]
-            },
+        entries = dataset.get("entries")
+        if not isinstance(entries, list):
+            raise ValueError("AgroBot knowledge base 'entries' must be a list")
 
-            # 4. Rice Bacterial Leaf Blight (BLB / ব্যাকটেরিয়াল পাতা পোড়া)
-            {
-                "id": "rice_blb",
-                "category": "Disease Control",
-                "crops": ["rice", "paddy"],
-                "keywords_en": ["blb", "bacterial leaf blight", "xanthomonas oryzae", "rice blight", "leaf burn"],
-                "keywords_bn": ["বিএলবি", "ব্যাকটেরিয়াল পাতা পোড়া", "ধানের পাতা শুকিয়ে", "ধানের ব্লাইট"],
-                "title_en": "🌾 Rice Bacterial Leaf Blight (BLB)",
-                "title_bn": "🌾 ধানের ব্যাকটেরিয়াল পাতা পোড়া রোগ (BLB)",
-                "summary_en": "Water-soaked yellow-orange wavy stripes along leaf margins starting from leaf tips, causing leaves to look bleached and scorched.",
-                "summary_bn": "পাতার ডগা থেকে শুরু করে দুই পাশ দিয়ে ঢেউ খেলানো হলুদ বা হলদেটে-সাদা দাগ নিচের দিকে নামে। পাতা পুড়ে যাওয়ার মতো শুকিয়ে যায়।",
-                "organic_en": ["Drain field water for 3 days.", "Stop Urea top dressing immediately; apply extra Muriate of Potash (MOP)."],
-                "organic_bn": ["জমির পানি কয়েকদিনের জন্য বের করে দিন।", "ইউরিয়া সার দেওয়া পুরোপুরি বন্ধ রাখুন এবং বিঘা প্রতি ৪-৫ কেজি পটাশ সার প্রয়োগ করুন।"],
-                "chemical_en": ["Spray Copper Oxychloride 50% WP @ 2.5 g/L + Streptocycline @ 0.1 g/L water twice at 7-day intervals."],
-                "chemical_bn": ["কপার অক্সিক্লোরাইড ২.৫ গ্রাম এবং স্ট্রেপ্টোসাইক্লিন ০.১ গ্রাম প্রতি লিটার জলে মিশিয়ে ৭ দিন অন্তর দুইবার স্প্রে করুন।"],
-                "suggestions_en": ["Rice blast disease", "Fertilizer guide", "Rice stem borer"],
-                "suggestions_bn": ["ধানের ব্লাস্ট রোগ", "সারের সঠিক নিয়মাবলী", "ধানের মাজরা পোকা"]
-            },
+        required_fields = {
+            "id", "category", "crops", "keywords_en", "keywords_bn",
+            "title_en", "title_bn", "summary_en", "summary_bn",
+            "organic_en", "organic_bn", "chemical_en", "chemical_bn",
+            "suggestions_en", "suggestions_bn", "provenance",
+        }
+        text_fields = {
+            "category", "title_en", "title_bn", "summary_en", "summary_bn",
+        }
+        list_fields = {
+            "crops", "keywords_en", "keywords_bn", "organic_en", "organic_bn",
+            "chemical_en", "chemical_bn", "suggestions_en", "suggestions_bn",
+        }
+        provenance_fields = {"source_name", "source_url", "region", "review_status", "last_reviewed"}
+        seen_ids = set()
+        for index, item in enumerate(entries):
+            if not isinstance(item, dict):
+                raise ValueError(f"AgroBot knowledge entry {index} must be an object")
+            missing = required_fields.difference(item)
+            if missing:
+                raise ValueError(
+                    f"AgroBot knowledge entry {index} is missing fields: {', '.join(sorted(missing))}"
+                )
+            if not isinstance(item["id"], str) or not item["id"].strip():
+                raise ValueError(f"AgroBot knowledge entry {index} has an invalid id")
+            if item["id"] in seen_ids:
+                raise ValueError(f"Duplicate AgroBot knowledge entry id: {item['id']}")
+            seen_ids.add(item["id"])
+            for field in text_fields:
+                if not isinstance(item[field], str):
+                    raise ValueError(f"AgroBot knowledge entry '{item['id']}' field '{field}' must be a string")
+            for field in list_fields:
+                if not isinstance(item[field], list) or not all(isinstance(value, str) for value in item[field]):
+                    raise ValueError(f"AgroBot knowledge entry '{item['id']}' field '{field}' must be a list of strings")
 
-            # 5. Potato Late Blight (আলুর নাবি ধসা)
-            {
-                "id": "potato_late_blight",
-                "category": "Disease Control",
-                "crops": ["potato", "tomato"],
-                "keywords_en": ["late blight", "potato late blight", "phytophthora", "water soaked spots", "potato blight", "rot"],
-                "keywords_bn": ["নাবি ধসা", "আলুর নাবি ধসা", "লেট ব্লাইট", "আলুর ধসা", "আলু পচা", "আলুর পাতা পোড়া", "আলুর রোগ"],
-                "title_en": "🥔 Potato Late Blight (Phytophthora infestans)",
-                "title_bn": "🥔 আলুর নাবি ধসা (লেট ব্লাইট) রোগ ও চিকিৎসা",
-                "summary_en": "The most destructive potato disease triggered by cold, foggy, overcast, humid weather. Dark water-soaked lesions appear on leaf tips/margins, with a whitish fungal ring on the underside during humid mornings.",
-                "summary_bn": "কুয়াশাচ্ছন্ন, মেঘলা ও স্যাঁতসেঁতে ঠাণ্ডা আবহাওয়ায় এই রোগ মহামারী রূপ নেয়। পাতার কিনারায় ও ডগায় ভেজা ভেজা তেলের মতো কালো দাগ হয়। সকালে পাতার নিচে সাদা তুলোর মতো ছত্রাক দেখা যায় এবং কয়েক দিনে পুরো ক্ষেত পচে দুর্গন্ধ ছড়ায়।",
-                "organic_en": [
-                    "Plant certified disease-free and sprouted seed tubers.",
-                    "Do not irrigate potato fields during dense foggy or cloudy periods.",
-                    "Ensure high earthing-up (মাটি তোলা) so fungal spores cannot wash down into tubers.",
-                    "Destroy and bury infected plant residue away from the field immediately."
-                ],
-                "organic_bn": [
-                    "কুয়াশা বা মেঘলা আবহাওয়ায় আলুর জমিতে কখনোই সেচ দেবেন না।",
-                    "গাছের গোড়ায় উঁচু করে ভেলি বেঁধে দিন (মাটি তুলুন) যাতে ছত্রাকের বীজ মাটির ভেতরের আলুতে পৌঁছাতে না পারে।",
-                    "আক্রান্ত গাছ বা পাতা তুলে দূরে মাটিতে পুঁতে ফেলুন।",
-                    "রোগের পূর্বাভাস পেলেই সতর্কতামূলক আগাম স্প্রে করুন।"
-                ],
-                "chemical_en": [
-                    "Preventive (before disease appears in foggy weather): Mancozeb 75% WP @ 2.5 g/L OR Chlorothalonil 75% WP @ 2 g/L water.",
-                    "Curative (after symptoms appear): Cymoxanil 8% + Mancozeb 64% WP (Curzate) @ 2.5 g/L OR Metalaxyl 8% + Mancozeb 64% WP (Ridomil Gold) @ 2 g/L water.",
-                    "Severe stage: Dimethomorph 50% WP @ 1 g/L or Fenamidone + Mancozeb (Sectin) @ 2 g/L."
-                ],
-                "chemical_bn": [
-                    "প্রতিরোধমূলক (কুয়াশা পড়ার সাথে সাথে): ম্যানকোজেব ৭৫% ডব্লিউপি (ডাইথেন এম-৪৫ বা ইন্ডোফিল) প্রতি লিটার জলে ২.৫ গ্রাম মিশিয়ে স্প্রে করুন।",
-                    "রোগ দেখা দিলে তাৎক্ষণিক চিকিৎসা: সাইমোক্সানিল ৮% + ম্যানকোজেব ৬৪% (কারজেট) প্রতি লিটার জলে ২.৫ গ্রাম অথবা রিডোমিল গোল্ড (মেটালাক্সিল+ম্যানকোজেব) ২ গ্রাম/লিটার।",
-                    "মারাত্মক অবস্থায়: সেকটিন (Sectin) বা এক্রোব্যাট (ডাইমেথোমর্ফ) ১-২ গ্রাম প্রতি লিটার জলে মিশিয়ে ৭ দিন অন্তর স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Potato early blight", "Potato fertilizer guide", "Storage tips for potato"],
-                "suggestions_bn": ["আলুর আগাম ধসা রোগ", "আলুর সুষম সার প্রয়োগের নিয়ম", "আলু সংরক্ষণের সঠিক উপায়"]
-            },
+            provenance = item["provenance"]
+            if not isinstance(provenance, dict) or not provenance_fields.issubset(provenance):
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' has incomplete provenance metadata")
+            if not isinstance(provenance["source_name"], str) or not provenance["source_name"].strip():
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' must identify its source")
+            if provenance["source_url"] is not None and not isinstance(provenance["source_url"], str):
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' has an invalid source_url")
+            if not isinstance(provenance["region"], list) or not all(
+                isinstance(region, str) for region in provenance["region"]
+            ):
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' region must be a list of strings")
+            if provenance["review_status"] not in {"unverified", "reviewed"}:
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' has an invalid review_status")
+            if provenance["last_reviewed"] is not None and not isinstance(provenance["last_reviewed"], str):
+                raise ValueError(f"AgroBot knowledge entry '{item['id']}' has an invalid last_reviewed date")
 
-            # 6. Tomato & Chilli Leaf Curl Virus & Whitefly
-            {
-                "id": "leaf_curl_whitefly",
-                "category": "Pest & Disease",
-                "crops": ["tomato", "chilli", "pepper", "papaya"],
-                "keywords_en": ["leaf curl", "yellow leaf curl", "whitefly", "thrips", "curled leaves", "stunted", "virus"],
-                "keywords_bn": ["পাতা কোঁকড়ানো", "টমেটোর পাতা কোঁকড়ানো", "মরিচের পাতা কোঁকড়ানো", "সাদা মাছি", "চুষি পোকা", "ভাইরাস", "পাতা কুঁকড়ে"],
-                "title_en": "🍅 Tomato & Chilli Leaf Curl Virus & Whitefly Management",
-                "title_bn": "🍅 টমেটো ও মরিচের পাতা কোঁকড়ানো রোগ ও সাদা মাছি দমন",
-                "summary_en": "Leaves curl upward or downward, thicken, turn leathery with yellow veins, and plants become stunted. This viral disease is transmitted primarily by tiny Whiteflies (Bemisia tabaci) and Thrips.",
-                "summary_bn": "গাছের পাতাগুলো উপরের বা নিচের দিকে কুঁকড়ে বাটি বা নৌকার মতো হয়ে যায়, পাতা পুরু ও শক্ত হয় এবং বৃদ্ধি থমকে যায়। এটি একটি ভাইরাস রোগ, যা মূলত ক্ষুদ্র 'সাদা মাছি' ও 'থ্রিপস' পোকার মাধ্যমে ছড়ায়।",
-                "organic_en": [
-                    "Install Yellow Sticky Traps @ 15-20 traps/acre to catch whiteflies, and Blue Sticky Traps for thrips.",
-                    "Uproot and immediately bury severely infected viral plants (they cannot be cured, only removed to save others).",
-                    "Spray Neem Seed Kernel Extract (NSKE 5%) or Neem Oil @ 5 ml/L water + mild soap every 7 days."
-                ],
-                "organic_bn": [
-                    "জমিতে হলুদ আঠালো ফাঁদ (Yellow Sticky Trap) প্রতি বিঘায় ১০-১২টি টাঙান; এতে উড়ন্ত সাদা মাছি আটকে মারা যায়।",
-                    "যেসব গাছে মারাত্মকভাবে ভাইরাস লেগেছে সেগুলো উপড়ে মাটিতে পুঁতে ফেলুন, কারণ ভাইরাস আক্রান্ত গাছ সুস্থ করা যায় না কিন্তু তা সুস্থ গাছে রোগ ছড়ায়।",
-                    "নিম তেল ৫ মিলি প্রতি লিটার পানিতে সামান্য ডিটারজেন্ট মিশিয়ে প্রতি সপ্তাহে স্প্রে করুন।"
-                ],
-                "chemical_en": [
-                    "Vector control (Whitefly & Thrips):",
-                    "Spray Imidacloprid 17.8% SL (Confidor) @ 0.5 ml/L OR Acetamiprid 20% SP @ 0.5 g/L water.",
-                    "For severe infestation: Diafenthiuron 50% WP (Pegasus) @ 1.2 g/L OR Spiromesifen 22.9% SC @ 1 ml/L."
-                ],
-                "chemical_bn": [
-                    "বাহক পোকা (সাদা মাছি ও থ্রিপস) নিয়ন্ত্রণে ঔষধ স্প্রে করুন:",
-                    "ইমিডাক্লোপ্রিড ১৭.৮% এসএল (যেমন কনফিডোর বা টিডো) প্রতি লিটার জলে ০.৫ মিলি অথবা এসিটামিপ্রিড ০.৫ গ্রাম/লিটার।",
-                    "মারাত্মক আক্রমণের ক্ষেত্রে: ডায়াফেনথিউরন ৫০% ডব্লিউপি (পেগাসাস) প্রতি লিটার পানিতে ১.২ গ্রাম স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Tomato early blight", "Fertilizer for vegetables", "Bio-pesticide preparation"],
-                "suggestions_bn": ["টমেটোর আগাম ধসা", "সবজির সার প্রয়োগ পদ্ধতি", "জৈব বালাইনাশক তৈরি"]
-            },
-
-            # 7. Balanced Fertilizer Schedule
-            {
-                "id": "fertilizer_guide",
-                "category": "Fertilizer & Soil",
-                "crops": ["general", "rice", "potato", "wheat", "vegetables"],
-                "keywords_en": ["fertilizer", "urea", "dap", "potash", "mop", "npk", "dosage", "zinc", "boron", "compost"],
-                "keywords_bn": ["সার", "ইউরিয়া", "ডিএপি", "পটাশ", "এমওপি", "জিংক", "দস্তা", "বোরন", "সারের মাত্রা", "জৈব সার", "সার প্রয়োগ"],
-                "title_en": "🧪 Balanced Fertilizer Management Guide (NPK & Micro-nutrients)",
-                "title_bn": "🧪 সুষম সার ব্যবস্থাপনা নির্দেশিকা (ইউরিয়া, ডিএপি ও পটাশ)",
-                "summary_en": "Balanced nutrition requires the 4R principle: Right Source, Right Rate, Right Time, and Right Place. Nitrogen (Urea) gives vegetative green growth; Phosphorus (DAP) develops strong roots; Potassium (Potash) builds grain weight and disease tolerance.",
-                "summary_bn": "সুষম সার প্রয়োগে ফসলের উৎপাদন বাড়ে এবং রোগবালাই কমে। নাইট্রোজেন (ইউরিয়া) গাছের বৃদ্ধি করে; ফসফরাস (ডিএপি/টিএসপি) মজবুত শিকড় তৈরি করে; পটাশিয়াম (এমওপি) রোগ প্রতিরোধ ক্ষমতা ও দানার পুষ্টি নিশ্চিত করে।",
-                "organic_en": [
-                    "Apply Well-decomposed Cow dung manure or Vermicompost @ 2-3 tonnes/acre during final land preparation.",
-                    "Incorporate Neem Cake @ 100 kg/acre to protect roots from nematodes and act as a natural slow-release nitrogen source.",
-                    "Practice Green Manuring with Dhaincha (Sesbania) once every 2 years."
-                ],
-                "organic_bn": [
-                    "জমি তৈরির শেষ চাষে প্রতি বিঘায় ৬০০-৮০০ কেজি পচা গোবর সার অথবা ২০০-২৫০ কেজি কেঁচো সার (ভার্মিকম্পোস্ট) মাটির সাথে মিশিয়ে দিন।",
-                    "বিঘা প্রতি ১৫-২০ কেজি নিম খৈল প্রয়োগ করলে মাটির উর্বরতা বাড়ে এবং উঁইপোকা ও কৃমির আক্রমণ দূর হয়।",
-                    "প্রতি বছর বা এক বছর অন্তর সবুজ সার হিসেবে ধৈঞ্চা চাষ করে মাটিতে মিশিয়ে দিন।"
-                ],
-                "chemical_en": [
-                    "Basal Dose (at sowing/transplanting): Full DAP/TSP + Half MOP (Potash) + Zinc Sulphate. DO NOT apply entire Urea at once!",
-                    "Top Dressing: Split Urea into 2-3 equal installments (e.g. at active tillering and panicle/flowering initiation).",
-                    "Always top dress Urea on moist soil (not in deep stagnant water or bone-dry soil) and incorporate into soil."
-                ],
-                "chemical_bn": [
-                    "আসল নিয়ম (শেষ চাষে): সম্পূর্ণ ডিএপি/টিএসপি, অর্ধেক পটাশ এবং পুরো জিংক বা দস্তা সার শেষ চাষের সময় মাটিতে দিতে হয়। কখনোই সব ইউরিয়া একসাথে দেবেন না!",
-                    "ইউরিয়া উপরি প্রয়োগ: ইউরিয়া সার সবসময় ২-৩ কিস্তিতে ভাগ করে দিতে হয় (যেমন চারা রোপণের ১৫-২০ দিন পর এবং থোড় বা ফুল আসার আগে)।",
-                    "ইউরিয়া সার জমিতে অতিরিক্ত পানি থাকা অবস্থায় বা একদম শুকনো মাটিতে দেওয়া নিষেধ। জমিতে হালকা রস থাকলে ছিটান।"
-                ],
-                "suggestions_en": ["Zinc deficiency in rice", "Soil testing methods", "Organic compost preparation"],
-                "suggestions_bn": ["ধানের দস্তা বা খায়রা রোগ", "মাটি পরীক্ষার সহজ নিয়ম", "জৈব সার তৈরির উপায়"]
-            },
-
-            # 8. Zinc Deficiency (Rice Khaira Disease)
-            {
-                "id": "zinc_deficiency",
-                "category": "Fertilizer & Soil",
-                "crops": ["rice", "maize", "wheat"],
-                "keywords_en": ["zinc", "khaira", "zinc deficiency", "rusty brown spots", "khaira disease", "yellowing"],
-                "keywords_bn": ["দস্তা", "জিংক", "খায়রা রোগ", "মরিচা দাগ", "দস্তার অভাব", "পাতায় লালচে দাগ"],
-                "title_en": "🌾 Zinc Deficiency & Khaira Disease in Rice",
-                "title_bn": "🌾 ধানের দস্তার অভাব ও খায়রা রোগ প্রতিকার",
-                "summary_en": "Zinc deficiency causes rusty brown/bronze patches on third or fourth young leaves 2-3 weeks after transplanting. Plants remain stunted with delayed maturity.",
-                "summary_bn": "চারা রোপণের ২-৩ সপ্তাহ পর কচি পাতার গোড়া হলুদ হয়ে যায় এবং পাতায় মরিচা পড়ার মতো লালচে-বাদামী দাগ ফুটে ওঠে। গাছ বেঁটে হয়ে যায়। একে ধানের 'খায়রা রোগ' বা দস্তার অভাব বলে।",
-                "organic_en": [
-                    "Drain stagnant water from the field for 3-5 days to aerate soil.",
-                    "Apply farmyard manure enriched with zinc sulphate before transplanting."
-                ],
-                "organic_bn": [
-                    "জমির পানি সরিয়ে দিয়ে ৩-৪ দিন বাতাস লাগতে দিন; মাটির ভেতরে বায়ু চলাচলের সুযোগ হলে গাছ দস্তা সহজে গ্রহণ করতে পারে।",
-                    "গোবর সারের সাথে মিশিয়ে জমিতে জিংক প্রয়োগ করুন।"
-                ],
-                "chemical_en": [
-                    "Soil application (Basal): Zinc Sulphate 21% @ 10 kg/acre OR Zinc Sulphate 33% (monohydrate) @ 6 kg/acre during final land preparation.",
-                    "Emergency Foliar spray: Dissolve 5g Zinc Sulphate (21%) + 2.5g Slaked Lime (চুন) per 1 Liter of water and spray twice at 7-day intervals."
-                ],
-                "chemical_bn": [
-                    "মাটিতে প্রয়োগ: শেষ চাষের সময় বিঘা প্রতি ১.৫-২ কেজি জিংক সালফেট ৩৩% মাটির সাথে মিশিয়ে দিন।",
-                    "জরুরি স্প্রে: প্রতি লিটার জলে ৫ গ্রাম জিংক সালফেট (২১%) এবং ২.৫ গ্রাম খাবার চুন বা ইউরিয়া মিশিয়ে আক্রান্ত পাতায় পরপর দুইবার স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Fertilizer guide", "Rice blast disease", "Soil health"],
-                "suggestions_bn": ["সার প্রয়োগ নির্দেশিকা", "ধানের ব্লাস্ট রোগ", "মাটির স্বাস্থ্য পরীক্ষা"]
-            },
-
-            # 9. Irrigation & Water Management (AWD)
-            {
-                "id": "irrigation_water",
-                "category": "Water Management",
-                "crops": ["general", "rice", "wheat", "potato", "vegetables"],
-                "keywords_en": ["irrigation", "water", "watering", "awd", "alternate wetting and drying", "drip", "drought", "waterlogging"],
-                "keywords_bn": ["সেচ", "পানি", "জল", "সেচ ব্যবস্থাপনা", "এডব্লিউডি", "খরা", "পানি নিষ্কাশন", "সেচের সময়", "পর্যায়ক্রমিক সেচ"],
-                "title_en": "💧 Smart Irrigation & AWD Water Management",
-                "title_bn": "💧 আধুনিক সেচ ব্যবস্থাপনা ও এডব্লিউডি (AWD) পদ্ধতি",
-                "summary_en": "Over-irrigation wastes energy, leaches nutrients, and causes root rot. Alternate Wetting and Drying (AWD) saves 25-30% water in paddy without any yield loss. Critical stages for irrigation must never face drought.",
-                "summary_bn": "অতিরিক্ত পানি দিলে শিকড় পচে যায় এবং সারের অপচয় হয়। ধানে এডব্লিউডি (পর্যায়ক্রমিক ভেজানো ও শুকানো) পদ্ধতি ব্যবহার করলে ২৫-৩০% পানি ও বিদ্যুৎ সাশ্রয় হয়। ফসলের সংকটকালীন মুহূর্তে সেচ দেওয়া অত্যন্ত জরুরি।",
-                "organic_en": [
-                    "Use AWD perforated plastic pipe (পানি পাইপ): Irrigate only when water level inside the pipe sinks 15 cm below soil surface.",
-                    "Use Mulching (straw or plastic sheets) in vegetables and potato to retain soil moisture and reduce water needs by half.",
-                    "Always create 6-inch deep drainage furrows around the field borders to flush out excess monsoon water."
-                ],
-                "organic_bn": [
-                    "এডব্লিউডি পাইপ পদ্ধতি: জমিতে একটি ছিদ্রযুক্ত পাইপ পুঁতে রাখুন। পাইপের ভেতরে পানি যখন মাটি থেকে ১৫ সেমি নিচে নেমে যাবে, তখনই কেবল সেচ দিন।",
-                    "সবজি ও আলুতে খড় বা পাতার মালচিং ব্যবহার করুন, এতে মাটির রস দীর্ঘদিন ধরে থাকে এবং অর্ধেক সেচ বাঁচে।",
-                    "বর্ষাকালে জলাবদ্ধতা ঠেকাতে জমির চারধারে অবশ্যই নিকাশী নালা তৈরি রাখুন।"
-                ],
-                "chemical_en": [
-                    "Critical irrigation stages:",
-                    "Wheat: Crown root initiation (CRI at 21 days), tillering, and milk stage.",
-                    "Rice: Active tillering and flowering to milk stage (ensure standing water at flowering).",
-                    "Potato: Tuber formation and tuber enlargement stages."
-                ],
-                "chemical_bn": [
-                    "বিভিন্ন ফসলের সেচের সবচেয়ে জরুরি সময়:",
-                    "গম: চারার বয়স ২০-২১ দিন (শিকড় বের হওয়ার সময়) এবং দানা বাঁধার সময় সেচ দেওয়া বাধ্যতামূলক।",
-                    "ধান: কুশি বের হওয়ার সময় এবং শিষ বের হওয়ার পর দানা বাঁধার সময় কোনোভাবেই যেন পানির ঘাটতি না হয়।",
-                    "আলু: আলুর গুটি ধরার সময় এবং গুটি বড় হওয়ার সময় নিয়মিত হালকা সেচ দিন।"
-                ],
-                "suggestions_en": ["Fertilizer guide", "Weather protection tips", "Rice blast disease"],
-                "suggestions_bn": ["সারের নিয়মাবলী", "দুর্যোগ ও আবহাওয়া সতর্কতা", "ধানের রোগবালাই"]
-            },
-
-            # 10. Organic Bio-Pesticide (Neem Oil Preparation)
-            {
-                "id": "organic_neem_spray",
-                "category": "Organic Farming",
-                "crops": ["general", "vegetables", "fruits"],
-                "keywords_en": ["neem oil", "bio pesticide", "organic pesticide", "natural spray", "homemade spray", "organic"],
-                "keywords_bn": ["নিম তেল", "জৈব বালাইনাশক", "জৈব কীটনাশক", "প্রাকৃতিক স্প্রে", "নিম পাতার স্প্রে", "বিষমুক্ত চাষ"],
-                "title_en": "🌿 How to Prepare & Use Neem Oil Bio-Pesticide",
-                "title_bn": "🌿 নিম তেল দিয়ে প্রাকৃতিক জৈব বালাইনাশক তৈরির নিয়ম",
-                "summary_en": "Neem oil contains Azadirachtin, which disrupts insect feeding, egg-laying, and metamorphosis without harming beneficial honeybees, earthworms, or spiders.",
-                "summary_bn": "নিম তেলে থাকা 'আজাদিরাকটিন' ক্ষতিকর পোকার প্রজনন, ডিম পাড়া ও খাবার ক্ষমতা নষ্ট করে। কিন্তু এটি পরিবেশবান্ধব এবং উপকারী মৌমাছি ও মাকড়সার কোনো ক্ষতি করে না।",
-                "organic_en": [
-                    "Recipe for 10 Liters of spray:",
-                    "1. Take 50 ml cold-pressed Pure Neem Oil (10,000 ppm or 1500 ppm).",
-                    "2. Take 15-20 ml liquid soap or mild shampoo as emulsifier (essential because oil does not mix with water).",
-                    "3. Thoroughly mix the soap with neem oil until it turns milky white.",
-                    "4. Dilute this milky mixture into 10 liters of clean water and shake well.",
-                    "5. Spray in the late afternoon (avoid hot midday sun) covering both upper and lower leaf surfaces."
-                ],
-                "organic_bn": [
-                    "১০ লিটার স্প্রে তৈরির ঘরোয়া সহজ নিয়ম:",
-                    "১. ৫০ মিলি খাঁটি কোল্ড-প্রেসড নিম তেল নিন।",
-                    "২. তেলের সাথে ১৫-২০ মিলি লিকুইড সাবান বা সাধারণ শ্যাম্পু ভালোভাবে গুলিয়ে নিন (সাবান না দিলে তেল পানির সাথে মিশবে না)।",
-                    "৩. তেল ও সাবানের সাদাটে মিশ্রণটি ১০ লিটার পরিষ্কার পানিতে ঢেলে খুব ভালোভাবে ঝাঁকান।",
-                    "৪. বিকেলে রোদ কমে গেলে গাছের পাতার ওপর ও নিচে ভিজিয়ে স্প্রে করুন। প্রতি ৭-১০ দিন পরপর ব্যবহার করলে পোকার আক্রমণ মুক্ত থাকা যায়।"
-                ],
-                "chemical_en": [
-                    "Neem acts as a preventive repellent. For heavy pest epidemics already beyond ETL, consider targeted systemic solutions."
-                ],
-                "chemical_bn": [
-                    "নিম তেল মূলত পোকার আক্রমণ প্রতিরোধে সেরা। কিন্তু পোকা যদি ইতোমধ্যে মহামারীর মতো রূপ নেয়, তবে তাত্ক্ষণিক রাসায়নিক প্রতিকার নিন।"
-                ],
-                "suggestions_en": ["Tomato leaf curl & whitefly", "Rice stem borer", "Balanced fertilizer"],
-                "suggestions_bn": ["টমেটোর সাদা মাছি ও পোকা", "ধানের মাজরা পোকা", "সুষম সার প্রয়োগ"]
-            },
-
-            # 11. Acidic Soil & Lime Treatment (মাটি পরীক্ষা ও চুন প্রয়োগ)
-            {
-                "id": "soil_lime_treatment",
-                "category": "Fertilizer & Soil",
-                "crops": ["general"],
-                "keywords_en": ["soil", "acidic soil", "lime", "ph", "soil testing", "dolomite", "saline"],
-                "keywords_bn": ["মাটি", "মাটি পরীক্ষা", "চুন", "অম্লীয় মাটি", "মাটির পিএইচ", "ডলোমাইট", "লবণাক্ত মাটি"],
-                "title_en": "🌱 Soil Health, Acidic Soil & Lime (Dolomite) Treatment",
-                "title_bn": "🌱 মাটির স্বাস্থ্য, অম্লীয় মাটি ও চুন প্রয়োগের নিয়ম",
-                "summary_en": "Soils with pH below 6.0 lock up Phosphorus and micronutrients, drastically reducing crop yield. Applying agricultural lime (Calcium Carbonate) or Dolomite neutralizes soil acidity.",
-                "summary_bn": "মাটির পিএইচ (pH) ৬.০ এর কম হলে মাটি অম্লীয় বা টক হয়ে যায়। এতে ফসফেট সার ও অন্যান্য পুষ্টি উপাদান মাটিতে আটকে থাকে এবং গাছ গ্রহণ করতে পারে না। কৃষি চুন বা ডলোমাইট প্রয়োগে মাটির উর্বরতা ফিরে আসে।",
-                "organic_en": [
-                    "Test your soil pH every 2-3 years at local Krishi Vigyan Kendra or Agriculture Office.",
-                    "Apply Agricultural Lime or Dolomite @ 25-30 kg per Bigha (75-90 kg/acre) depending on acidity.",
-                    "Apply lime 15-20 days BEFORE sowing or transplanting and plough it into moist soil.",
-                    "NEVER mix lime directly with Urea or DAP/SSP fertilizers simultaneously, as it leads to ammonia gas loss."
-                ],
-                "organic_bn": [
-                    "প্রতি ২-৩ বছর পর পর কৃষি অফিসে গিয়ে মাটির স্বাস্থ্য ও পিএইচ পরীক্ষা করুন।",
-                    "মাটি অতিরিক্ত অম্লীয় হলে শেষ চাষের ১৫-২০ দিন আগে বিঘা প্রতি ২৫-৩০ কেজি গুঁড়ো কৃষি চুন বা ডলোমাইট মাটিতে ছিটিয়ে চষে দিন।",
-                    "চুন প্রয়োগের সময় মাটিতে হালকা রস থাকা ভালো।",
-                    "সাবধান: চুনের সাথে একই দিনে কখনোই ইউরিয়া বা ডিএপি সার মেশাবেন না, এতে সারের কার্যক্ষমতা নষ্ট হয়ে গ্যাস হয়ে উড়ে যায়।"
-                ],
-                "chemical_en": [
-                    "For saline (alkaline) soils (pH > 8.5): Apply Gypsum @ 50 kg/acre and provide good drainage channels."
-                ],
-                "chemical_bn": [
-                    "লবণাক্ত বা ক্ষারীয় মাটির জন্য (pH ৮.৫ এর বেশি): চুন দেবেন না; পরিবর্তে জিপসাম সার এবং প্রচুর জৈব সার প্রয়োগ করুন।"
-                ],
-                "suggestions_en": ["Fertilizer dosage guide", "Compost making", "Smart irrigation"],
-                "suggestions_bn": ["সারের সঠিক মাত্রা", "কেঁচো সার তৈরি", "সেচ ব্যবস্থাপনা"]
-            },
-
-            # 12. Brinjal Shoot and Fruit Borer (বেগুনের ডগা ও ফল ছিদ্রকারী পোকা)
-            {
-                "id": "brinjal_fruit_borer",
-                "category": "Pest Management",
-                "crops": ["brinjal", "eggplant"],
-                "keywords_en": ["brinjal", "eggplant", "fruit borer", "shoot borer", "leucinodes", "borer"],
-                "keywords_bn": ["বেগুন", "বেগুনের পোকা", "ডগা ছিদ্রকারী", "ফল ছিদ্রকারী", "বেগুনের ডগা ও ফল পচা"],
-                "title_en": "🍆 Brinjal Shoot and Fruit Borer Management",
-                "title_bn": "🍆 বেগুনের ডগা ও ফল ছিদ্রকারী পোকা দমন",
-                "summary_en": "Caterpillars bore into tender shoots causing drooping, then bore inside developing eggplants leaving small holes plugged with excreta, making fruits unmarketable.",
-                "summary_bn": "কীড়া বেগুনের কচি ডগায় ঢুকে খায়, ফলে ডগা নুয়ে পড়ে শুকিয়ে যায়। পরবর্তীতে ফলের ভেতরে ঢুকে খেয়ে ছিদ্র করে এবং মল ত্যাগ করে, যার ফলে বেগুন পচে ও খাওয়ার অনুপযোগী হয়ে যায়।",
-                "organic_en": [
-                    "Clip and destroy wilted shoot tips and infected fruits with larvae inside twice a week.",
-                    "Install Lucinlure Pheromone Traps @ 12-15 traps/acre.",
-                    "Spray Bacillus thuringiensis (Bt) formulation @ 2 g/L water.",
-                    "Spray Neem Seed Kernel Extract (5%) or Neem Oil 5ml/L."
-                ],
-                "organic_bn": [
-                    "সপ্তাহে দুইবার আক্রান্ত ডগা ও পোকা লাগা বেগুন ছিঁড়ে মাটিতে পুঁতে বা পুড়িয়ে ফেলুন।",
-                    "জমিতে 'লিউসিনলুর' সেক্স ফেরোমন ফাঁদ বিঘা প্রতি ৪-৫টি স্থাপন করুন। এতে পুরুষ পোকা ফাঁদে পড়ে বংশবৃদ্ধি বন্ধ হয়।",
-                    "জৈব বালাইনাশক যেমন বিটি (Bacillus thuringiensis) প্রতি লিটার পানিতে ২ গ্রাম মিশিয়ে স্প্রে করুন।",
-                    "নিম তেল স্প্রে করুন।"
-                ],
-                "chemical_en": [
-                    "Spray Emamectin Benzoate 5% SG (Proclaim) @ 0.5 g/L OR Chlorantraniliprole 18.5% SC @ 0.4 ml/L water.",
-                    "Observe 3-day waiting period before harvesting fruits for market."
-                ],
-                "chemical_bn": [
-                    "রাসায়নিক প্রতিকার: এমামেক্টিন বেনজয়েট ৫% এসজি (যেমন প্রোক্লেইম) প্রতি লিটার জলে ০.৫ গ্রাম অথবা কোরাজেন ০.৪ মিলি/লিটার স্প্রে করুন।",
-                    "কীটনাশক স্প্রে করার পর অন্তত ৩-৫ দিন বেগুন তুলবেন না।"
-                ],
-                "suggestions_en": ["Bio-pesticide recipe", "Tomato fruit care", "Pesticide waiting periods"],
-                "suggestions_bn": ["জৈব নিম তেল তৈরি", "টমেটোর রোগ দমন", "কীটনাশক ব্যবহারের সতর্কতা"]
-            },
-
-            # 13. Weather, Cyclone & Heavy Rain Precautions
-            {
-                "id": "weather_disaster",
-                "category": "Weather Advisory",
-                "crops": ["general", "rice", "potato", "vegetables"],
-                "keywords_en": ["weather", "rain", "heavy rain", "cyclone", "flood", "storm", "fog", "frost", "cold wave"],
-                "keywords_bn": ["আবহাওয়া", "বৃষ্টি", "ভারী বৃষ্টি", "ঘূর্ণিঝড়", "বন্যা", "তুফান", "কুয়াশা", "শীত", "ঠাণ্ডা", "দুর্যোগ"],
-                "title_en": "⛈️ Weather Precautions: Heavy Rain, Storms & Frost Protection",
-                "title_bn": "⛈️ আবহাওয়া ও দুর্যোগ সতর্কতা: ভারী বৃষ্টি, ঝড় ও কুয়াশা থেকে রক্ষা",
-                "summary_en": "Sudden weather extremes can destroy standing crops. Proactive field preparation, clearing drainage, and timing sprays according to forecasts protects hard work.",
-                "summary_bn": "হঠাৎ ঝড়-বৃষ্টি, কুয়াশা বা বন্যা ফসলের ব্যাপক ক্ষতি করে। আবহাওয়ার পূর্বাভাস দেখে আগে থেকেই পানি নিকাশের ব্যবস্থা রাখা এবং স্প্রে বন্ধ রাখা জরুরি।",
-                "organic_en": [
-                    "Before heavy rains/cyclones: Clear all peripheral field drains and channels so water drains out immediately.",
-                    "Harvest ready crops (80-85% mature grains) immediately without waiting for full 100% maturity.",
-                    "Do NOT spray pesticides or broadcast fertilizers if rain is forecast within 24 hours.",
-                    "During heavy winter fog: Light small bonfires (ধোঁয়া দেওয়া) on the windward side of potato fields at night to raise temperature and deter fungal spores."
-                ],
-                "organic_bn": [
-                    "ভারী বৃষ্টি বা ঝড়ের পূর্বাভাস পেলে: জমির চারপাশের নিকাশী নালাগুলো তাৎক্ষণিক পরিষ্কার করুন যেন পানি জমে না থাকে।",
-                    "জমিতে ৮০-৮৫% ধান বা ফসল পেকে থাকলে দেরি না করে দ্রুত কেটে মাড়াই করে ঘরে তুলুন।",
-                    "বৃষ্টির সম্ভাবনা থাকলে জমিতে সার বা কীটনাশক স্প্রে করা পুরোপুরি স্থগিত রাখুন।",
-                    "আলুর জমিতে ঘন কুয়াশার রাতে জমির উত্তর-পশ্চিম কোণে খড়কুটোয় ধোঁয়া তৈরি করলে তাপমাত্রা কিছুটা বাড়ে এবং নাবি ধসার ঝুঁকি কমে।"
-                ],
-                "chemical_en": [
-                    "Post-rain recovery: Drain all submerged fields within 24-48 hours. Spray 1% Urea solution (10g/L) or 0.5% Potash foliar spray to help plants regain root vigor."
-                ],
-                "chemical_bn": [
-                    "বৃষ্টি বা পানি নেমে যাওয়ার পর: দ্রুত জমিতে জমা পানি বের করুন। গাছ চাঙ্গা করতে ১% ইউরিয়া বা পটাশ দ্রবণ পাতায় স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Potato late blight in foggy weather", "Smart irrigation", "Farmer helplines"],
-                "suggestions_bn": ["কুয়াশায় আলুর নাবি ধসা রক্ষা", "আধুনিক সেচ পদ্ধতি", "কৃষি হেল্পলাইন নম্বর"]
-            },
-
-            # 14. Government Helplines & Emergency Agri Support
-            {
-                "id": "helpline_support",
-                "category": "Helpline & Schemes",
-                "crops": ["general"],
-                "keywords_en": ["helpline", "kisan call center", "support", "government", "contact", "scheme", "emergency", "expert", "phone"],
-                "keywords_bn": ["হেল্পলাইন", "কৃষি হেল্পলাইন", "কিষাণ কল সেন্টার", "ফোন নম্বর", "সরকারি সহায়তা", "কৃষি অফিসার", "জরুরি নম্বর"],
-                "title_en": "📞 Farmer Helpline & Agricultural Expert Contact Numbers",
-                "title_bn": "📞 কৃষি হেল্পলাইন ও কৃষক সহায়তা জরুরি নম্বর",
-                "summary_en": "Official toll-free telephone numbers where farmers can directly speak to agricultural scientists and agronomists in English, Bengali, or local languages free of cost.",
-                "summary_bn": "সরকারি টোল-ফ্রি নম্বর যেখানে বিনামূল্যে কৃষি বিজ্ঞানী ও বিশেষজ্ঞদের সাথে সরাসরি বাংলা ও স্থানীয় ভাষায় কথা বলে ফসলের সমস্যা সমাধান পাওয়া যায়।",
-                "organic_en": [
-                    "India — Kisan Call Center: 1800-180-1551 (Toll-Free, 6 AM to 10 PM, supports Bengali/Hindi/English).",
-                    "India — Short Code: 15533.",
-                    "West Bengal — Matir Katha & Agri Help: Available through local Block Development Agricultural Office (ADA).",
-                    "Bangladesh — Krishi Call Center: 16123 (Call from any mobile operator for expert farming solutions)."
-                ],
-                "organic_bn": [
-                    "🇮🇳 ভারত — কিষাণ কল সেন্টার (Kisan Call Center): ১৮০০-১৮০-১৫৫১ (1800-180-1551, সম্পূর্ণ বিনামূল্যে সকাল ৬টা থেকে রাত ১০টা পর্যন্ত বাংলায় সহায়তা)।",
-                    "🇮🇳 ভারতের শর্ট কোড: ১৫৫৩৩ (15533)।",
-                    "পশ্চিমবঙ্গ: স্থানীয় ব্লক কৃষি আধিকারিক (ADA অফিস) ও মাটির কথা পোর্টাল।",
-                    "🇧🇩 বাংলাদেশ — কৃষি কল সেন্টার: ১৬১২৩ (16123, যেকোনো মোবাইল অপারেটর থেকে কল করে কৃষি বিশেষজ্ঞদের পরামর্শ নিন)।"
-                ],
-                "chemical_en": [],
-                "chemical_bn": [],
-                "suggestions_en": ["Rice blast disease", "Urea & DAP fertilizer guide", "Potato late blight"],
-                "suggestions_bn": ["ধানের ব্লাস্ট রোগ প্রতিকার", "ইউরিয়া ও ডিএপি সারের নিয়ম", "আলুর নাবি ধসা রোগ"]
-            },
-
-            # 15. Wheat Rust and Blight (গমের রোগ ও প্রতিকার)
-            {
-                "id": "wheat_rust",
-                "category": "Disease Control",
-                "crops": ["wheat"],
-                "keywords_en": ["wheat", "wheat rust", "yellow rust", "brown rust", "wheat disease"],
-                "keywords_bn": ["গম", "গমের রোগ", "হলুদ মরিচা", "গমের মরিচা রোগ", "গমের ব্লাস্ট", "গম চাষ"],
-                "title_en": "🌾 Wheat Rust & Leaf Blight Management",
-                "title_bn": "🌾 গমের মরিচা ও পাতা পোড়া রোগ ব্যবস্থাপনা",
-                "summary_en": "Yellow/Stripe rust and Brown/Leaf rust produce powdery pustules on wheat leaves, reducing photosynthetic area and causing shriveled grains.",
-                "summary_bn": "গমের পাতার ওপর হলুদ বা বাদামী রঙের গুঁড়ো গুঁড়ো মরিচার মতো দাগ হয়। স্পর্শ করলে আঙুলে গুঁড়ো পাউডারের মতো লেগে যায়। এতে দানা পুষ্ট হয় না ও চিটা হয়ে যায়।",
-                "organic_en": [
-                    "Sow resistant wheat varieties recommended for your region.",
-                    "Ensure timely sowing (by mid-November) to avoid terminal heat and late rust attacks.",
-                    "Avoid excessive Nitrogen fertilizers."
-                ],
-                "organic_bn": [
-                    "রোগ প্রতিরোধী অনুমোদিত জাতের গমের বীজ বপন করুন।",
-                    "সঠিক সময়ে (নভেম্বরের মাঝামাঝি) বীজ বপন সম্পন্ন করুন।",
-                    "অতিরিক্ত ইউরিয়া প্রয়োগ থেকে বিরত থাকুন।"
-                ],
-                "chemical_en": [
-                    "At first sign of rust: Spray Propiconazole 25% EC (Tilt) @ 1 ml/L OR Tebuconazole 25.9% EC @ 1 ml/L water.",
-                    "Repeat after 15 days if cloudy humid conditions persist."
-                ],
-                "chemical_bn": [
-                    "রোগের লক্ষণ দেখা মাত্র: প্রোপিকোনাজোল ২৫% ইসি (যেমন টিল্ট) প্রতি লিটার জলে ১ মিলি অথবা টেবুকোনাজোল ১ মিলি/লিটার স্প্রে করুন।",
-                    "মেঘলা আবহাওয়া থাকলে ১৫ দিন পর আরেকবার স্প্রে করুন।"
-                ],
-                "suggestions_en": ["Fertilizer guide", "Irrigation at CRI stage", "Mustard aphid"],
-                "suggestions_bn": ["সারের সঠিক ব্যবহার", "গমের সেচের সময়", "সরিষার জাব পোকা"]
-            },
-
-            # 16. Mustard Aphid / Jhab Poka (সরিষার জাব পোকা)
-            {
-                "id": "mustard_aphid",
-                "category": "Pest Management",
-                "crops": ["mustard"],
-                "keywords_en": ["mustard", "aphid", "mustard aphid", "lipaphis", "jhab poka"],
-                "keywords_bn": ["সরিষা", "সরিষার পোকা", "জাব পোকা", "সরিষার জাব পোকা", "মাছি পোকা"],
-                "title_en": "🌼 Mustard Aphid (Lipaphis erysimi) Control",
-                "title_bn": "🌼 সরিষার জাব পোকা (Aphid) দমন পদ্ধতি",
-                "summary_en": "Colonies of tiny greenish-black aphids suck sap from mustard flowers, pods, and tender shoots during flowering, drastically reducing oil yield.",
-                "summary_bn": "ফুল ও পড ধরার সময় হাজার হাজার ক্ষুদ্র সবুজ-কালো জাব পোকা দলবেঁধে কুঁড়ি ও কচি ডাল থেকে রস চুষে খায়। গাছ দুর্বল হয়ে যায় এবং ফলন ব্যাপক কমে যায়।",
-                "organic_en": [
-                    "Install Yellow Sticky Traps @ 10 traps/acre.",
-                    "Spray Neem Oil @ 5 ml/L water with soap.",
-                    "Conserve natural predators like Ladybird beetles."
-                ],
-                "organic_bn": [
-                    "জমিতে হলুদ আঠালো ফাঁদ (Yellow Sticky Trap) বিঘা প্রতি ৪-৫টি টাঙান।",
-                    "প্রাথমিক অবস্থায় নিম তেল ৫ মিলি প্রতি লিটার জলে সাবান মিশিয়ে স্প্রে করুন।",
-                    "উপকারী বন্ধু পোকা (লেডিবার্ড বিটল) সংরক্ষণ করুন।"
-                ],
-                "chemical_en": [
-                    "Spray Dimethoate 30% EC (Rogor) @ 1.7 ml/L OR Imidacloprid 17.8% SL @ 0.3 ml/L water.",
-                    "Spray in the LATE AFTERNOON to avoid killing foraging honeybees."
-                ],
-                "chemical_bn": [
-                    "রোগ বেশি হলে: ডাইমিথোয়েট ৩০% ইসি (রোগর) প্রতি লিটার পানিতে ১.৫-১.৭ মিলি অথবা ইমিডাক্লোপ্রিড ০.৩ মিলি/লিটার স্প্রে করুন।",
-                    "অবশ্যই বিকেলে স্প্রে করবেন, যেন উপকারী মৌমাছির কোনো ক্ষতি না হয়।"
-                ],
-                "suggestions_en": ["Neem bio-spray recipe", "Wheat rust management", "Helpline numbers"],
-                "suggestions_bn": ["জৈব নিম তেল তৈরি", "গমের রোগবালাই", "কৃষি হেল্পলাইন নম্বর"]
-            }
-        ]
+        return entries
 
     def _build_crop_aliases(self) -> Dict[str, List[str]]:
         return {

@@ -146,6 +146,20 @@ AgroBot is a **fully offline, bilingual smart farming advisor** embedded in the 
 | **Typing / Thinking Indicator** | Animated brain icon with thinking dots shown during response generation. |
 | **Chat History Clear** | One-click chat reset with a rotating icon button. |
 
+### Maintaining the Knowledge Base
+
+AgroBot's general advisory responses are stored in [`app/data/agrobot_knowledge.json`](app/data/agrobot_knowledge.json), separately from the matching and response code. The file has a `schema_version`, a `dataset_version`, and a target geography (`IN-WB`, India—West Bengal). Each bilingual entry includes its source, applicable region, review status, and review date under `provenance`. The separate disease-class advice map remains in `app/agrobot.py` and must also be source-reviewed as part of future expansion.
+
+When adding or updating advice:
+
+1. Add focused, independently searchable entries and useful English, Bangla, and Banglish keywords.
+2. Cite a trustworthy agricultural source and URL; scope regional or state-specific guidance in `provenance.region`.
+3. Mark advice `reviewed` only after checking it against that source. Keep legacy material `unverified` until its original recommendations have been validated.
+4. Include units and safety qualifications for any dosage, and verify the current product label and local approvals before giving pesticide recommendations.
+5. Run `python -m unittest discover -s tests` to check the dataset and retrieval behavior.
+
+The entries migrated from the original in-code knowledge base are intentionally marked `unverified`: their original sources were not recorded. This data migration preserves existing responses; it does not certify the recommendations. New India-specific material should be added only after verification against appropriate Indian agricultural-extension sources.
+
 ---
 
 ## 🖥️ UI Design & Frontend

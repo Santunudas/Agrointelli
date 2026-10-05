@@ -34,6 +34,8 @@ notebooks/AgroIntelli_Standalone/outputs/
 notebooks/AgroIntelli_Standalone/artifacts/
 outputs/
 data/
+!app/data/
+!app/data/agrobot_knowledge.json
 *.keras
 *.h5
 *.tflite
