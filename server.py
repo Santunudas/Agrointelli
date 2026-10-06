@@ -3,7 +3,6 @@ import tempfile
 import uvicorn
 from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 from typing import Optional
@@ -11,6 +10,7 @@ from typing import Optional
 # Import DiseaseEngine and AgroBotEngine packages
 from app.inference import DiseaseEngine
 from app.agrobot import AgroBotEngine
+from app.auth import router as auth_router
 
 app = FastAPI(
     title="AgroIntelli AI Engine",
@@ -18,18 +18,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for local testing if needed
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Initialize deep learning inference engine and AgroBot
 engine = DiseaseEngine()
 agrobot = AgroBotEngine()
+app.include_router(auth_router)
 
 
 class ChatRequest(BaseModel):
@@ -107,4 +99,11 @@ if __name__ == "__main__":
     print("  - Localhost: http://localhost:8000")
     print("  - Local Network: http://0.0.0.0:8000")
     print("=" * 55 + "\n")
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        proxy_headers=True,
+        forwarded_allow_ips="127.0.0.1,::1",
+    )

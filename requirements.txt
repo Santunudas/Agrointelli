@@ -11,3 +11,5 @@ numpy
 fastapi
 uvicorn
 python-multipart
+pymongo
+argon2-cffi

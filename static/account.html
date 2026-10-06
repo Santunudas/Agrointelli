@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create an optional AgroIntelli farmer profile.">
+    <title>Farmer Account — AgroIntelli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="account-page">
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+
+    <main class="account-shell">
+        <header class="account-heading">
+            <a class="account-brand" href="/">
+                <i class="fa-solid fa-leaf leaf-logo"></i>
+                <span>AgroIntelli</span>
+            </a>
+            <a class="account-back-link" href="/">Back to plant diagnosis</a>
+        </header>
+
+        <section class="glass-card account-card">
+            <div class="account-title">
+                <span class="account-icon"><i class="fa-solid fa-seedling"></i></span>
+                <h1 id="account-title">Your farmer account</h1>
+                <p>Save your farming profile to help tailor future advice. An account is optional.</p>
+            </div>
+
+            <div class="account-message hidden" id="account-message" role="status" aria-live="polite"></div>
+
+            <section id="auth-panel">
+                <div class="account-tabs" role="tablist" aria-label="Account action">
+                    <button type="button" class="account-tab active" id="tab-login" role="tab" aria-selected="true">Sign in</button>
+                    <button type="button" class="account-tab" id="tab-register" role="tab" aria-selected="false">Create account</button>
+                </div>
+
+                <form id="auth-form" class="account-form">
+                    <label class="account-field hidden" id="name-field" for="auth-name">
+                        <span>Full name</span>
+                        <input id="auth-name" name="name" type="text" maxlength="100" autocomplete="name">
+                    </label>
+                    <label class="account-field" for="auth-email">
+                        <span>Email</span>
+                        <input id="auth-email" name="email" type="email" maxlength="254" autocomplete="email" required>
+                    </label>
+                    <label class="account-field" for="auth-password">
+                        <span>Password <small id="password-hint">At least 12 characters</small></span>
+                        <input id="auth-password" name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required>
+                    </label>
+                    <label class="account-field hidden" id="state-field" for="auth-state">
+                        <span>State or union territory</span>
+                        <select id="auth-state" name="state">
+                            <option value="">Choose your state or union territory</option>
+                            <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+                            <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+                            <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+                            <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+                            <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+                            <option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+                            <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+                            <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+                            <option>Uttarakhand</option><option>West Bengal</option>
+                            <option>Andaman and Nicobar Islands</option><option>Chandigarh</option>
+                            <option>Dadra and Nagar Haveli and Daman and Diu</option><option>Delhi</option>
+                            <option>Jammu and Kashmir</option><option>Ladakh</option><option>Lakshadweep</option>
+                            <option>Puducherry</option>
+                        </select>
+                    </label>
+                    <label class="account-field hidden" id="crops-field" for="auth-crops">
+                        <span>Crops you grow <small>Separate multiple crops with commas</small></span>
+                        <input id="auth-crops" name="crops" type="text" maxlength="1000" placeholder="For example: rice, potato, mustard">
+                    </label>
+                    <button class="account-submit" id="auth-submit" type="submit">Sign in</button>
+                </form>
+                <p class="account-privacy-note">Your password is stored as a secure hash, never as readable text. If you create an account, your name, email, state, and crops are saved in the MongoDB service configured by the site operator. Don’t reuse a password from another site.</p>
+            </section>
+
+            <section id="profile-panel" class="hidden">
+                <p class="profile-email" id="profile-email"></p>
+                <form id="profile-form" class="account-form">
+                    <label class="account-field" for="profile-name">
+                        <span>Full name</span>
+                        <input id="profile-name" type="text" maxlength="100" required>
+                    </label>
+                    <label class="account-field" for="profile-state">
+                        <span>State or union territory</span>
+                        <select id="profile-state" required>
+                            <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+                            <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+                            <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+                            <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+                            <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+                            <option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+                            <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+                            <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+                            <option>Uttarakhand</option><option>West Bengal</option>
+                            <option>Andaman and Nicobar Islands</option><option>Chandigarh</option>
+                            <option>Dadra and Nagar Haveli and Daman and Diu</option><option>Delhi</option>
+                            <option>Jammu and Kashmir</option><option>Ladakh</option><option>Lakshadweep</option>
+                            <option>Puducherry</option>
+                        </select>
+                    </label>
+                    <label class="account-field" for="profile-crops">
+                        <span>Crops you grow <small>Separate multiple crops with commas</small></span>
+                        <input id="profile-crops" type="text" maxlength="1000" required>
+                    </label>
+                    <button class="account-submit" type="submit">Save profile</button>
+                </form>
+                <button class="account-logout" id="logout-button" type="button">Sign out</button>
+            </section>
+
+            <p class="account-disclaimer">Plant diagnosis and AgroBot remain available without signing in. This first version does not include email verification or password reset.</p>
+        </section>
+    </main>
+    <script src="account.js"></script>
+</body>
+</html>

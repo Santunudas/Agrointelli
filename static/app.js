@@ -37,6 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let uploadedFile = null;
 
+    const accountLink = document.getElementById('account-link');
+    fetch('/auth/me')
+        .then((response) => {
+            if (!response.ok) return null;
+            return response.json();
+        })
+        .then((data) => {
+            if (data && data.user) {
+                accountLink.textContent = `Hi, ${data.user.name}`;
+            }
+        })
+        .catch(() => {
+            // Accounts are optional; keep the main app available if auth is offline.
+        });
+
     // Toggle Labels Active State
     fieldModeToggle.addEventListener('change', () => {
         const labels = document.querySelectorAll('.mode-label');
@@ -865,4 +880,3 @@ document.addEventListener('DOMContentLoaded', () => {
     setChatLanguage(chatLanguage);
     loadQuickTopics();
 });
-

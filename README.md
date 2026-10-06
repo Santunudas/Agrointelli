@@ -16,6 +16,9 @@ AgroIntelli/
 │   ├── __init__.py
 │   ├── inference.py          # TFLite inference engine (quality check + severity proxy)
 │   ├── agrobot.py            # Bilingual (English & Bangla) offline agronomy chatbot engine
+│   ├── auth.py               # Optional MongoDB-backed user accounts and sessions
+│   ├── data/
+│   │   └── agrobot_knowledge.json
 │   └── artifacts/            # Model + label assets (used by the web app)
 │       ├── agrointelli_quant.tflite   # INT8 quantized model (~1.2 MB)
 │       ├── labels.txt                 # 38-class label list
@@ -25,6 +28,8 @@ AgroIntelli/
 │   ├── index.html            # Glassmorphism UI — diagnostic dashboard + AgroBot chat widget
 │   ├── style.css             # Modern dark glassmorphism theme, mobile-responsive
 │   └── app.js                # Upload, drag-drop, voice recognition, AgroBot chat logic
+│   ├── account.html          # Optional sign-in, registration, and profile page
+│   └── account.js            # Account page interactions
 ├── server.py                 # FastAPI entry point (/predict, /chat, /chat/quick-topics)
 ├── requirements.txt          # Project dependencies
 ├── .gitignore
@@ -88,6 +93,43 @@ Once the environment is set up, starting the server is straightforward:
 3. **Open in Browser:**
    - **Local PC:** [http://localhost:8000](http://localhost:8000)
    - **Android / Mobile (same Wi-Fi):** `http://<your-computer-ip>:8000` *(e.g., `http://192.168.1.15:8000`)*
+
+### Optional User Accounts
+
+AgroBot and plant diagnosis remain available without signing in. Registration and profiles use MongoDB; account endpoints return `503` until `MONGODB_URI` is configured.
+
+Set these environment variables before starting the server:
+
+```powershell
+$env:MONGODB_URI = "mongodb://localhost:27017"
+$env:MONGODB_DATABASE = "agrointelli"
+$env:AUTH_COOKIE_SECURE = "false" # Local HTTP development only; set true when served over HTTPS.
+python server.py
+```
+
+The local MongoDB service must already be installed and running for that example to work. Alternatively, use a MongoDB Atlas connection string stored in `MONGODB_URI`.
+
+For deployment, use a MongoDB connection string protected by your hosting provider's secret manager and set `AUTH_COOKIE_SECURE=true` while serving the site over HTTPS. Do not expose MongoDB directly to the internet or commit credentials into the repository. The account page is available at `/account.html`. The first version supports registration, sign-in, sign-out, and editing a user's name, Indian state/union territory, and crop list. It does not yet include email verification, password reset, account deletion, or login rate limiting; add those before opening account registration to the public internet.
+
+### Temporary Sharing with Pinggy
+
+To share a temporary HTTPS link while the app runs on your computer:
+
+1. Configure `MONGODB_URI` and start the app in one PowerShell terminal. Set `AUTH_COOKIE_SECURE=true` for the Pinggy HTTPS link. Use `false` only when accessing the app directly over local HTTP.
+  ```powershell
+  $env:MONGODB_URI = "mongodb://localhost:27017"
+  $env:MONGODB_DATABASE = "agrointelli"
+  $env:AUTH_COOKIE_SECURE = "true"
+  python server.py
+  ```
+  The local MongoDB service must be running. You can use Atlas instead by setting `MONGODB_URI` to its connection string.
+2. In a second terminal, start the Pinggy tunnel:
+  ```powershell
+  ssh -p 443 -R0:localhost:8000 a.pinggy.io
+  ```
+3. Share the HTTPS URL printed by Pinggy. Keep both terminals open while your friends use the site. Anyone with the link can reach the app, so share it only with people you trust; never share your MongoDB connection string.
+
+The server trusts forwarded protocol headers only from loopback, where the local SSH tunnel connects. If using MongoDB Atlas, ensure its network access rules allow connections from the computer running this app.
 
 ---
 
@@ -177,13 +219,19 @@ The frontend is built with **Vanilla HTML, CSS, and JavaScript** — no framewor
 
 ## 🔌 API Endpoints
 
-The FastAPI server exposes three endpoints:
+The FastAPI server exposes these endpoints:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/predict` | Upload a leaf image. Returns prediction, confidence, top-3 alternates, severity proxy, image quality metrics, and care advice. Accepts `field_mode` query parameter. |
 | `POST` | `/chat` | Send a farming question (with optional `language` and `diagnosis_context`). Returns a bilingual reply with follow-up suggestions. |
 | `GET` | `/chat/quick-topics` | Returns localized quick-action topic chips for English and Bangla. |
+| `GET` | `/auth/status` | Reports whether MongoDB-backed accounts are configured. |
+| `POST` | `/auth/register` | Create an account with name, email, password, state, and crops. |
+| `POST` | `/auth/login` | Sign in and create a server-side session. |
+| `GET` | `/auth/me` | Return the signed-in user's profile. |
+| `PATCH` | `/auth/me` | Update the signed-in user's name, state, and crops (CSRF token required). |
+| `POST` | `/auth/logout` | Revoke the current session (CSRF token required). |
 | `GET` | `/` | Serves the static frontend (`index.html`). |
 
 ### Example `/predict` Response
@@ -232,7 +280,7 @@ The FastAPI server exposes three endpoints:
 
 ## 🔒 Privacy & Performance
 
-- ✅ **100% Offline** — No cloud calls, no data leaves your device (unless optional LLM API keys are configured).
+- ✅ **Local-First** — Diagnostics and built-in advice run locally. Optional LLM calls send questions to the configured provider; optional account registration sends profile and authentication data to the configured MongoDB service.
 - ✅ **Millisecond Inference** — INT8 quantized TFLite model runs in under 100ms on CPU.
 - ✅ **Local Network Ready** — Deployable on your PC; accessible from any phone on the same Wi-Fi.
 - ✅ **No Framework Lock-in** — Pure HTML/CSS/JS frontend; no Node.js or bundler required.
@@ -255,6 +303,8 @@ numpy
 fastapi
 uvicorn
 python-multipart
+pymongo
+argon2-cffi
 ```
 
 > [!NOTE]
