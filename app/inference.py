@@ -104,12 +104,13 @@ class DiseaseEngine:
 
         arr = np.array(img).astype(np.int16)
         r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        hue, saturation, _ = np.array(img.convert("HSV")).transpose((2, 0, 1))
 
-        leaf = (g > r * 0.9) & (g > b * 0.85) & (g > 30)
+        leaf = (g > r * 0.9) & (g > b * 0.85) & (g > 30) & (saturation > 20)
         if leaf.sum() < 100:
             return {"severity": "unknown", "lesion_ratio": 0.0}
 
-        lesion = leaf & ((g < 120) | (r > 140) | (b > 140))
+        lesion = leaf & (hue < 45) & (saturation > 50)
         ratio = float(lesion.sum() / leaf.sum())
 
         if ratio < 0.08:
