@@ -47,7 +47,7 @@ AgroIntelli/
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/rahulkr90930/Agrointelli.git
+git clone https://github.com/Santunudas/Agrointelli.git
 cd Agrointelli
 ```
 
