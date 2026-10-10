@@ -11,6 +11,7 @@ from typing import Optional
 from app.inference import DiseaseEngine
 from app.agrobot import AgroBotEngine
 from app.auth import router as auth_router
+from app.batches import router as batches_router
 
 app = FastAPI(
     title="AgroIntelli AI Engine",
@@ -20,8 +21,10 @@ app = FastAPI(
 
 # Initialize deep learning inference engine and AgroBot
 engine = DiseaseEngine()
+app.state.disease_engine = engine
 agrobot = AgroBotEngine()
 app.include_router(auth_router)
+app.include_router(batches_router)
 
 
 class ChatRequest(BaseModel):

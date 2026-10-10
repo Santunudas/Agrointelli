@@ -244,6 +244,38 @@ input:checked + .slider:before {
     margin-bottom: 18px;
 }
 
+.batch-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.batch-field {
+    display: grid;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.batch-field input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--card-border-hover);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    color: var(--text-primary);
+    background: #fff;
+    font: inherit;
+    font-weight: 500;
+}
+
+.batch-field input:focus {
+    outline: 2px solid var(--primary-glow);
+    border-color: var(--primary);
+}
+
 /* Drag-Drop Zone */
 .drag-drop-zone {
     border: 2px dashed rgba(16, 185, 129, 0.25);
@@ -349,6 +381,43 @@ input:checked + .slider:before {
     object-fit: contain;
 }
 
+.selected-files {
+    position: absolute;
+    z-index: 4;
+    inset: 46px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    overflow-y: auto;
+    padding: 4px;
+    background: #f8faf9;
+}
+
+.selected-file {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    background: white;
+    color: var(--text-secondary);
+    text-align: left;
+    font-size: 12px;
+}
+
+.selected-file span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selected-file small {
+    color: var(--text-muted);
+}
+
 .btn-remove-image {
     position: absolute;
     top: 10px;
@@ -365,6 +434,16 @@ input:checked + .slider:before {
     cursor: pointer;
     z-index: 5;
     transition: var(--transition);
+}
+
+.btn-remove-image {
+    width: auto;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 18px;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 11px;
 }
 
 .btn-remove-image:hover {
@@ -417,6 +496,44 @@ input:checked + .slider:before {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+.batch-progress {
+    margin-top: 14px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.batch-progress-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
+}
+
+.batch-progress progress {
+    display: block;
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px;
+    accent-color: var(--primary);
+}
+
+.batch-progress progress::-webkit-progress-bar {
+    background: #e2e8f0;
+    border-radius: 8px;
+}
+
+.batch-progress progress::-webkit-progress-value {
+    background: var(--primary);
+    border-radius: 8px;
+}
+
+.batch-progress progress::-moz-progress-bar {
+    background: var(--primary);
+    border-radius: 8px;
 }
 
 /* Info Card */
@@ -855,6 +972,92 @@ input:checked + .slider:before {
     padding: 8px 10px;
 }
 
+.timeline-heading,
+.batch-results-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+}
+
+.timeline-heading .section-desc,
+.batch-results-heading .section-desc {
+    margin-bottom: 12px;
+}
+
+.timeline-refresh {
+    flex: none;
+    border: 1px solid var(--card-border-hover);
+    border-radius: 20px;
+    padding: 7px 12px;
+    background: white;
+    color: var(--primary-hover);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.timeline-message {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.timeline-list,
+.batch-results-list {
+    display: grid;
+    gap: 8px;
+}
+
+.timeline-visit,
+.batch-result-item {
+    width: 100%;
+    display: grid;
+    gap: 4px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px;
+    background: #fff;
+    color: var(--text-primary);
+    text-align: left;
+    font: inherit;
+}
+
+.timeline-visit,
+.batch-results-list button {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.timeline-visit:hover,
+.batch-results-list button:hover {
+    border-color: var(--primary);
+    background: #f5fcf8;
+}
+
+.timeline-visit strong,
+.batch-result-item strong {
+    font-size: 13px;
+}
+
+.timeline-visit span,
+.batch-result-item span,
+.batch-result-item small {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.batch-result-item small {
+    color: var(--text-muted);
+}
+
+.batch-result-failure {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: var(--danger-bg);
+}
+
 /* Care Advice */
 .advice-card {
     background: linear-gradient(135deg, #e6fbf2 0%, var(--card-bg) 60%);
@@ -924,6 +1127,9 @@ input:checked + .slider:before {
     }
     .metrics-list {
         gap: 8px;
+    }
+    .batch-fields {
+        grid-template-columns: 1fr;
     }
 }
 

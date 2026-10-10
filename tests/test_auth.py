@@ -194,6 +194,27 @@ class AuthEndpointTests(unittest.TestCase):
             )
         self.assertEqual(rejected.exception.status_code, 403)
 
+    def test_authenticated_user_requires_valid_session_and_csrf_for_writes(self):
+        with self.assertRaises(HTTPException) as unsigned:
+            auth.get_authenticated_user(self.make_request(), require_csrf=True)
+        self.assertEqual(unsigned.exception.status_code, 401)
+
+        user, cookies = self.register()
+        request = self.make_request(
+            cookies=cookies,
+            headers={"X-CSRF-Token": cookies[auth.CSRF_COOKIE]},
+        )
+        current_user, store = auth.get_authenticated_user(request, require_csrf=True)
+        self.assertEqual(current_user["email"], user["email"])
+        self.assertIs(store, self.store)
+
+        with self.assertRaises(HTTPException) as missing_csrf:
+            auth.get_authenticated_user(
+                self.make_request(cookies={auth.SESSION_COOKIE: cookies[auth.SESSION_COOKIE]}),
+                require_csrf=True,
+            )
+        self.assertEqual(missing_csrf.exception.status_code, 403)
+
     def test_register_rejects_short_password(self):
         with self.assertRaises(ValidationError):
             auth.RegisterRequest(

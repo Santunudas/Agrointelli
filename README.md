@@ -17,6 +17,7 @@ AgroIntelli/
 │   ├── inference.py          # TFLite inference engine (quality check + severity proxy)
 │   ├── agrobot.py            # Bilingual (English & Bangla) offline agronomy chatbot engine
 │   ├── auth.py               # Optional MongoDB-backed user accounts and sessions
+│   ├── batches.py            # Saved crop visits, batch inference, and history API
 │   ├── data/
 │   │   └── agrobot_knowledge.json
 │   └── artifacts/            # Model + label assets (used by the web app)
@@ -30,7 +31,7 @@ AgroIntelli/
 │   └── app.js                # Upload, drag-drop, voice recognition, AgroBot chat logic
 │   ├── account.html          # Optional sign-in, registration, and profile page
 │   └── account.js            # Account page interactions
-├── server.py                 # FastAPI entry point (/predict, /chat, /chat/quick-topics)
+├── server.py                 # FastAPI entry point (/predict, /batches, /chat)
 ├── requirements.txt          # Project dependencies
 ├── .gitignore
 └── README.md
@@ -109,7 +110,7 @@ python server.py
 
 The local MongoDB service must already be installed and running for that example to work. Alternatively, use a MongoDB Atlas connection string stored in `MONGODB_URI`.
 
-For deployment, use a MongoDB connection string protected by your hosting provider's secret manager and set `AUTH_COOKIE_SECURE=true` while serving the site over HTTPS. Do not expose MongoDB directly to the internet or commit credentials into the repository. The account page is available at `/account.html`. The first version supports registration, sign-in, sign-out, and editing a user's name, Indian state/union territory, and crop list. It does not yet include email verification, password reset, account deletion, or login rate limiting; add those before opening account registration to the public internet.
+For deployment, use a MongoDB connection string protected by your hosting provider's secret manager and set `AUTH_COOKIE_SECURE=true` while serving the site over HTTPS. Do not expose MongoDB directly to the internet or commit credentials into the repository. The account page is available at `/account.html`. The app also supports batch crop visits when signed in: choose a crop and field, analyze up to 20 photos per visit, and review timestamped results from earlier visits in the field timeline. Results are stored in the `diagnostic_batches` collection and are only returned to the account that created them. Each image is limited to 10 MB. Visitors can still use image analysis without signing in, but guest results are not saved. The first version supports registration, sign-in, sign-out, and editing a user's name, Indian state/union territory, and crop list. It does not yet include email verification, password reset, account deletion, or login rate limiting; add those before opening account registration to the public internet.
 
 ### Temporary Sharing with Pinggy
 

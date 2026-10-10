@@ -41,53 +41,73 @@
             <!-- Left Panel: Upload and Controls -->
             <section class="control-panel">
                 <div class="glass-card upload-card">
-                    <h2 class="section-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Leaf Image</h2>
-                    <p class="section-desc">Supports JPEG, PNG, BMP, or WEBP. Max 10MB.</p>
+                    <h2 class="section-title"><i class="fa-solid fa-cloud-arrow-up"></i> Track a crop</h2>
+                    <p class="section-desc">Add photos from one field visit. Each result is dated for easy comparison.</p>
+
+                    <div class="batch-fields">
+                        <label class="batch-field" for="crop-name">Crop
+                            <input id="crop-name" type="text" maxlength="80" placeholder="e.g. Tomato">
+                        </label>
+                        <label class="batch-field" for="field-name">Field or plot
+                            <input id="field-name" type="text" maxlength="100" placeholder="e.g. North field">
+                        </label>
+                    </div>
                     
                     <div class="drag-drop-zone" id="drop-zone">
-                        <input type="file" id="file-input" accept="image/*" class="file-input-hidden">
+                        <input type="file" id="file-input" accept="image/jpeg,image/png,image/bmp,image/webp" multiple class="file-input-hidden" aria-label="Choose up to 20 leaf images">
                         <div class="drop-zone-content" id="drop-content">
                             <i class="fa-solid fa-images upload-icon"></i>
-                            <p class="upload-text">Drag & drop your leaf image here</p>
+                            <p class="upload-text">Drop leaf photos here</p>
                             <span class="or-text">or</span>
-                            <button type="button" class="btn-browse" id="btn-browse">Browse Files</button>
+                            <button type="button" class="btn-browse" id="btn-browse">Choose photos</button>
                         </div>
+                        <div class="selected-files hidden" id="selected-files" aria-live="polite"></div>
                         <div class="preview-container hidden" id="preview-container">
-                            <img id="image-preview" src="#" alt="Leaf Preview">
-                            <button type="button" class="btn-remove-image" id="btn-remove-image" title="Remove Image">
-                                <i class="fa-solid fa-xmark"></i>
+                            <button type="button" class="btn-remove-image" id="btn-remove-image" title="Clear selected photos">
+                                <i class="fa-solid fa-xmark"></i> Clear photos
                             </button>
                         </div>
                     </div>
 
                     <button type="button" class="btn-analyze disabled" id="btn-analyze" disabled>
-                        <span class="btn-text">Analyze Plant Leaf</span>
+                        <span class="btn-text">Analyze photos</span>
                         <i class="fa-solid fa-microscope icon-analyze"></i>
                         <span class="spinner hidden" id="btn-spinner"></span>
                     </button>
+                    <div class="batch-progress hidden" id="batch-progress" aria-live="polite">
+                        <div class="batch-progress-heading"><span id="batch-progress-text">Preparing visit...</span><span id="batch-progress-count"></span></div>
+                        <progress id="batch-progress-bar" max="100" value="0"></progress>
+                    </div>
                 </div>
 
                 <div class="glass-card info-card">
-                    <h3><i class="fa-solid fa-circle-info"></i> About AgroIntelli</h3>
-                    <p>AgroIntelli leverages a quantized <strong>MobileNetV3-Small</strong> deep learning model trained on over 38 distinct plant-disease classes. Designed for offline field deployment, it runs fast, lightweight, and fully client-safe.</p>
-                    <div class="spec-list">
-                        <div class="spec-item"><span class="spec-name">Model Size</span><span class="spec-val">1.2 MB (TFLite)</span></div>
-                        <div class="spec-item"><span class="spec-name">Precision</span><span class="spec-val">INT8 Quantized</span></div>
-                        <div class="spec-item"><span class="spec-name">Target Size</span><span class="spec-val">160 × 160 px</span></div>
-                    </div>
+                    <h3><i class="fa-solid fa-circle-info"></i> Simple field tracking</h3>
+                    <p>Analyze up to 20 photos per visit. Sign in to save this field timeline and open it later. Results are labeled with the actual visit date and time.</p>
                 </div>
             </section>
 
             <!-- Right Panel: Results Dashboard -->
             <section class="results-panel">
+                <div class="glass-card timeline-card hidden" id="history-card">
+                    <div class="timeline-heading">
+                        <div>
+                            <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Field timeline</h2>
+                            <p class="section-desc">Previous visits for this crop and field</p>
+                        </div>
+                        <button type="button" class="timeline-refresh" id="history-refresh">Refresh</button>
+                    </div>
+                    <p class="timeline-message" id="history-message">Sign in to view saved visits.</p>
+                    <div class="timeline-list" id="history-list"></div>
+                </div>
+
                 <!-- Welcome/Empty State -->
                 <div class="glass-card empty-state" id="empty-state">
                     <div class="empty-content">
                         <div class="pulse-ring">
                             <i class="fa-solid fa-seedling seedling-icon"></i>
                         </div>
-                        <h2>Awaiting Diagnostics</h2>
-                        <p>Upload a leaf image on the left and click <strong>Analyze Plant Leaf</strong> to run deep neural inference, quality checks, and severity analysis.</p>
+                        <h2>Ready to check your crop</h2>
+                        <p>Choose one or more leaf photos to see dated results for this field visit.</p>
                     </div>
                 </div>
 
@@ -102,6 +122,16 @@
                         <div class="skeleton-block"></div>
                         <div class="skeleton-block long"></div>
                     </div>
+                </div>
+
+                <div class="glass-card batch-results-card hidden" id="batch-results-card">
+                    <div class="batch-results-heading">
+                        <div>
+                            <h2 class="section-title"><i class="fa-solid fa-list-check"></i> Visit results</h2>
+                            <p class="section-desc" id="batch-results-summary"></p>
+                        </div>
+                    </div>
+                    <div class="batch-results-list" id="batch-results-list"></div>
                 </div>
 
                 <!-- Real Results Dashboard -->

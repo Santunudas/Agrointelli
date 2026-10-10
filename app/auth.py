@@ -120,9 +120,11 @@ class AuthStore:
         self.client = client
         self.users: Collection = database["users"]
         self.sessions: Collection = database["sessions"]
+        self.batches: Collection = database["diagnostic_batches"]
         self.users.create_index([("email", ASCENDING)], unique=True)
         self.sessions.create_index([("token_hash", ASCENDING)], unique=True)
         self.sessions.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+        self.batches.create_index([("user_id", ASCENDING), ("field_key", ASCENDING), ("crop_key", ASCENDING), ("created_at", -1)])
 
 
 def get_auth_store() -> AuthStore:
@@ -235,6 +237,22 @@ def _current_session(request: Request, store: AuthStore) -> tuple[dict[str, Any]
         store.sessions.delete_one({"_id": session["_id"]})
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Please sign in")
     return user, session
+
+
+def get_authenticated_user(
+    request: Request, *, require_csrf: bool = False
+) -> tuple[dict[str, Any], AuthStore]:
+    if not request.cookies.get(SESSION_COOKIE):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Please sign in")
+    try:
+        store = get_auth_store()
+        user, session = _current_session(request, store)
+        if require_csrf:
+            _require_same_origin(request)
+            _require_csrf(request, session)
+        return user, store
+    except PyMongoError as error:
+        raise _handle_database_error(error) from error
 
 
 def _create_session(store: AuthStore, user: dict[str, Any], response: Response) -> None:

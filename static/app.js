@@ -4,12 +4,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('file-input');
     const btnBrowse = document.getElementById('btn-browse');
     const previewContainer = document.getElementById('preview-container');
-    const imagePreview = document.getElementById('image-preview');
+    const selectedFilesContainer = document.getElementById('selected-files');
     const btnRemoveImage = document.getElementById('btn-remove-image');
-    
     const btnAnalyze = document.getElementById('btn-analyze');
     const btnSpinner = document.getElementById('btn-spinner');
     const fieldModeToggle = document.getElementById('field-mode-toggle');
+    const cropNameInput = document.getElementById('crop-name');
+    const fieldNameInput = document.getElementById('field-name');
+    const progressContainer = document.getElementById('batch-progress');
+    const progressText = document.getElementById('batch-progress-text');
+    const progressCount = document.getElementById('batch-progress-count');
+    const progressBar = document.getElementById('batch-progress-bar');
+    const historyCard = document.getElementById('history-card');
+    const historyMessage = document.getElementById('history-message');
+    const historyList = document.getElementById('history-list');
+    const historyRefresh = document.getElementById('history-refresh');
+    const batchResultsCard = document.getElementById('batch-results-card');
+    const batchResultsSummary = document.getElementById('batch-results-summary');
+    const batchResultsList = document.getElementById('batch-results-list');
     
     const emptyState = document.getElementById('empty-state');
     const skeletonState = document.getElementById('skeleton-state');
@@ -35,7 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const qualityWarningsBox = document.getElementById('quality-warnings-box');
     const adviceText = document.getElementById('advice-text');
 
-    let uploadedFile = null;
+    const MAX_BATCH_IMAGES = 20;
+    const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+    let uploadedFiles = [];
+    let signedIn = false;
 
     const accountLink = document.getElementById('account-link');
     fetch('/auth/me')
@@ -45,12 +60,37 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then((data) => {
             if (data && data.user) {
+                signedIn = true;
                 accountLink.textContent = `Hi, ${data.user.name}`;
+                historyCard.classList.remove('hidden');
+                loadBatchHistory();
             }
         })
         .catch(() => {
             // Accounts are optional; keep the main app available if auth is offline.
         });
+
+    function csrfToken() {
+        const cookie = document.cookie.split('; ').find((part) => part.startsWith('agro_csrf='));
+        return cookie ? decodeURIComponent(cookie.slice('agro_csrf='.length)) : '';
+    }
+
+    async function readJsonResponse(response) {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const detail = Array.isArray(data.detail)
+                ? data.detail.map((item) => item.msg).join('. ')
+                : data.detail;
+            throw new Error(detail || 'The request could not be completed.');
+        }
+        return data;
+    }
+
+    function updateAnalyzeButton() {
+        const disabled = uploadedFiles.length === 0;
+        btnAnalyze.classList.toggle('disabled', disabled);
+        btnAnalyze.toggleAttribute('disabled', disabled);
+    }
 
     // Toggle Labels Active State
     fieldModeToggle.addEventListener('change', () => {
@@ -63,9 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         fileInput.click();
     });
-
-    // File Input Selection
-    fileInput.addEventListener('change', handleFileSelect);
 
     // Drag and Drop
     ['dragenter', 'dragover'].forEach(eventName => {
@@ -88,101 +125,251 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length) {
-            fileInput.files = files;
-            handleFileSelect();
-        }
+        handleFiles(e.dataTransfer.files);
     });
 
-    function handleFileSelect() {
-        const file = fileInput.files[0];
-        if (!file) return;
+    function handleFiles(fileList) {
+        const files = Array.from(fileList);
+        const invalidFiles = files.filter((file) => !file.type.startsWith('image/'));
+        if (invalidFiles.length) {
+            alert('Please select only valid image files (PNG, JPG, BMP, WEBP).');
+            return;
+        }
+        if (!files.length) return;
+        if (files.length > MAX_BATCH_IMAGES) {
+            alert(`Choose no more than ${MAX_BATCH_IMAGES} photos for one visit.`);
+            return;
+        }
+        const oversized = files.find((file) => file.size > MAX_IMAGE_BYTES);
+        if (oversized) {
+            alert(`${oversized.name} is larger than 10 MB.`);
+            return;
+        }
+        uploadedFiles = files;
+        renderSelectedFiles();
+        updateAnalyzeButton();
+        if (signedIn) loadBatchHistory();
+    }
 
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file (PNG, JPG, BMP, WEBP).');
+    function renderSelectedFiles() {
+        selectedFilesContainer.innerHTML = '';
+        uploadedFiles.forEach((file) => {
+            const item = document.createElement('div');
+            item.className = 'selected-file';
+            item.innerHTML = '<i class="fa-regular fa-image"></i>';
+            const name = document.createElement('span');
+            name.textContent = file.name;
+            const size = document.createElement('small');
+            size.textContent = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+            item.append(name, size);
+            selectedFilesContainer.appendChild(item);
+        });
+        selectedFilesContainer.classList.toggle('hidden', uploadedFiles.length === 0);
+        previewContainer.classList.toggle('hidden', uploadedFiles.length === 0);
+    }
+
+    fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+    btnRemoveImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        uploadedFiles = [];
+        fileInput.value = '';
+        renderSelectedFiles();
+        updateAnalyzeButton();
+    });
+
+    btnAnalyze.addEventListener('click', async () => {
+        if (!uploadedFiles.length) return;
+        const filesToAnalyze = uploadedFiles.slice();
+        if (signedIn && (!cropNameInput.value.trim() || !fieldNameInput.value.trim())) {
+            alert('Enter the crop and field name to save this visit to your timeline.');
             return;
         }
 
-        uploadedFile = file;
-
-        // Render Preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            previewContainer.classList.remove('hidden');
-            btnAnalyze.classList.remove('disabled');
-            btnAnalyze.removeAttribute('disabled');
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // Remove Image
-    btnRemoveImage.addEventListener('click', (e) => {
-        e.stopPropagation();
-        resetImageUpload();
-    });
-
-    function resetImageUpload() {
-        uploadedFile = null;
-        fileInput.value = '';
-        imagePreview.src = '#';
-        previewContainer.classList.add('hidden');
-        btnAnalyze.classList.add('disabled');
-        btnAnalyze.setAttribute('disabled', 'true');
-        
-        // Return to empty state
-        dashboardResults.classList.remove('visible');
-        setTimeout(() => {
-            dashboardResults.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-        }, 300);
-    }
-
-    // Run Neural Inference
-    btnAnalyze.addEventListener('click', async () => {
-        if (!uploadedFile) return;
-
-        // UI States
         btnAnalyze.classList.add('disabled');
         btnAnalyze.setAttribute('disabled', 'true');
         btnSpinner.classList.remove('hidden');
-        
+        progressContainer.classList.remove('hidden');
+        progressBar.value = 0;
         emptyState.classList.add('hidden');
         dashboardResults.classList.remove('visible');
         dashboardResults.classList.add('hidden');
-        skeletonState.classList.remove('hidden');
-
-        const formData = new FormData();
-        formData.append('file', uploadedFile);
-        
+        batchResultsCard.classList.remove('hidden');
+        batchResultsList.innerHTML = '';
+        batchResultsSummary.textContent = signedIn ? 'Saving each result to your field timeline.' : 'Sign in to save these results to a field timeline.';
         const fieldMode = fieldModeToggle.checked;
-        
+        let batch = null;
+        let completed = 0;
+        let failed = 0;
         try {
-            const response = await fetch(`/predict?field_mode=${fieldMode}`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('API server returned an error.');
+            if (signedIn) {
+                const response = await fetch('/batches', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken()
+                    },
+                    body: JSON.stringify({
+                        crop_name: cropNameInput.value.trim(),
+                        field_name: fieldNameInput.value.trim()
+                    })
+                });
+                batch = await readJsonResponse(response);
             }
 
-            const data = await response.json();
-            renderResults(data);
+            for (let index = 0; index < filesToAnalyze.length; index += 1) {
+                const file = filesToAnalyze[index];
+                progressText.textContent = `Analyzing ${file.name}`;
+                progressCount.textContent = `${index + 1} of ${filesToAnalyze.length}`;
+                const formData = new FormData();
+                formData.append('file', file);
+                const url = batch
+                    ? `/batches/${encodeURIComponent(batch.id)}/images?field_mode=${fieldMode}`
+                    : `/predict?field_mode=${fieldMode}`;
+                const headers = batch ? { 'X-CSRF-Token': csrfToken() } : {};
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers,
+                        body: formData
+                    });
+                    const result = await readJsonResponse(response);
+                    if (result.ok === false) {
+                        throw new Error(result.error || 'Image analysis failed.');
+                    }
+                    result.filename = result.filename || file.name;
+                    result.analyzed_at = result.analyzed_at || new Date().toISOString();
+                    completed += 1;
+                    addBatchResult(result, index + 1);
+                    renderResults(result);
+                } catch (error) {
+                    failed += 1;
+                    addBatchFailure(file.name, error.message);
+                }
+                progressBar.value = ((index + 1) / filesToAnalyze.length) * 100;
+            }
+
+            progressText.textContent = failed
+                ? `Finished with ${failed} photo${failed === 1 ? '' : 's'} not analyzed.`
+                : 'Visit analysis complete.';
+            batchResultsSummary.textContent = `${completed} photo${completed === 1 ? '' : 's'} analyzed${batch ? ' and saved' : ''}${failed ? ` · ${failed} failed` : ''}.`;
+            if (completed === 0) {
+                dashboardResults.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+            if (batch) await loadBatchHistory();
 
         } catch (error) {
-            console.error('Inference Error:', error);
-            alert(`Analysis failed: ${error.message}`);
-            skeletonState.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+            console.error('Batch analysis error:', error);
+            progressText.textContent = `Could not start this visit: ${error.message}`;
+            batchResultsSummary.textContent = 'No photos were analyzed.';
+            if (batchResultsList.children.length === 0) {
+                batchResultsCard.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
         } finally {
             btnAnalyze.classList.remove('disabled');
             btnAnalyze.removeAttribute('disabled');
             btnSpinner.classList.add('hidden');
         }
     });
+
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        return Number.isNaN(date.getTime())
+            ? 'Date unavailable'
+            : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    }
+
+    function addBatchResult(result, number) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'batch-result-item';
+        const title = document.createElement('strong');
+        title.textContent = `${number}. ${result.filename}`;
+        const diagnosis = document.createElement('span');
+        diagnosis.textContent = cleanClassName(result.prediction);
+        const details = document.createElement('small');
+        details.textContent = `${(result.confidence * 100).toFixed(1)}% match · ${result.severity_proxy.severity} · ${formatTimestamp(result.analyzed_at)}`;
+        button.append(title, diagnosis, details);
+        button.addEventListener('click', () => renderResults(result));
+        batchResultsList.appendChild(button);
+    }
+
+    function addBatchFailure(filename, message) {
+        const item = document.createElement('div');
+        item.className = 'batch-result-item batch-result-failure';
+        const title = document.createElement('strong');
+        title.textContent = filename;
+        const details = document.createElement('small');
+        details.textContent = message;
+        item.append(title, details);
+        batchResultsList.appendChild(item);
+    }
+
+    async function loadBatchHistory() {
+        if (!signedIn) return;
+        historyMessage.textContent = 'Loading saved visits...';
+        const query = new URLSearchParams({ limit: '50' });
+        if (cropNameInput.value.trim()) query.set('crop_name', cropNameInput.value.trim());
+        if (fieldNameInput.value.trim()) query.set('field_name', fieldNameInput.value.trim());
+        try {
+            const response = await fetch(`/batches?${query.toString()}`, { credentials: 'same-origin' });
+            const data = await readJsonResponse(response);
+            renderBatchHistory(data.batches);
+        } catch (error) {
+            historyList.innerHTML = '';
+            historyMessage.textContent = `Could not load saved visits: ${error.message}`;
+        }
+    }
+
+    function renderBatchHistory(batches) {
+        historyList.innerHTML = '';
+        if (!batches.length) {
+            historyMessage.textContent = 'No previous visits found for this crop and field.';
+            return;
+        }
+        const visitNumbers = new Map();
+        batches.slice().reverse().forEach((batch) => {
+            const key = `${batch.crop_name.toLocaleLowerCase()}|${batch.field_name.toLocaleLowerCase()}`;
+            visitNumbers.set(key, (visitNumbers.get(key) || 0) + 1);
+            batch.visit_number = visitNumbers.get(key);
+        });
+        historyMessage.textContent = 'Select a visit to review its saved results.';
+        batches.forEach((batch) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'timeline-visit';
+            const label = document.createElement('strong');
+            label.textContent = `Visit ${batch.visit_number} · ${formatTimestamp(batch.created_at)}`;
+            const detail = document.createElement('span');
+            const diagnoses = [...new Set(batch.results.map((result) => cleanClassName(result.prediction)))];
+            detail.textContent = `${batch.crop_name} · ${batch.field_name} · ${batch.result_count} photo${batch.result_count === 1 ? '' : 's'}${diagnoses.length ? ` · ${diagnoses.join(', ')}` : ''}`;
+            button.append(label, detail);
+            button.addEventListener('click', () => showSavedBatch(batch));
+            historyList.appendChild(button);
+        });
+    }
+
+    function showSavedBatch(batch) {
+        batchResultsCard.classList.remove('hidden');
+        batchResultsList.innerHTML = '';
+        batchResultsSummary.textContent = `${batch.crop_name} · ${batch.field_name} · ${formatTimestamp(batch.created_at)} · saved visit`;
+        batch.results.forEach((result, index) => addBatchResult(result, index + 1));
+        if (batch.results.length) {
+            emptyState.classList.add('hidden');
+            renderResults(batch.results[batch.results.length - 1]);
+        } else {
+            dashboardResults.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+        }
+    }
+
+    historyRefresh.addEventListener('click', loadBatchHistory);
+    cropNameInput.addEventListener('change', () => signedIn && loadBatchHistory());
+    fieldNameInput.addEventListener('change', () => signedIn && loadBatchHistory());
 
     // Formatting Helpers
     function cleanClassName(className) {
