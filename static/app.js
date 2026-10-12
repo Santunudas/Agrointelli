@@ -1017,14 +1017,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('Server returned error response');
-            }
-
-            const data = await response.json();
+            const data = await readJsonResponse(response);
 
             // Enforce minimum thinking delay (2 seconds) for attention span
-            const thinkingDelay = data.thinking_delay || 2000;
+            const thinkingDelay = data.thinking_delay !== undefined ? data.thinking_delay : 2000;
             const elapsed = Date.now() - thinkingStartTime;
             const remaining = Math.max(0, thinkingDelay - elapsed);
 
@@ -1050,8 +1046,8 @@ document.addEventListener('DOMContentLoaded', () => {
             chatTypingIndicator.classList.add('hidden');
             appendBotMessage({
                 reply: (chatLanguage === 'bn')
-                    ? "দুঃখিত, সংযোগে ত্রুটি হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
-                    : "Sorry, a connection error occurred. Please try again in a moment.",
+                    ? `দুঃখিত, উত্তর তৈরি করা যায়নি। ${error.message}`
+                    : `I couldn't generate a reply. ${error.message}`,
                 language: chatLanguage === 'bn' ? 'bn' : 'en',
                 category: 'Error'
             });

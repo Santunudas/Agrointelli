@@ -1,15 +1,15 @@
 import os
 import tempfile
 import uvicorn
-from fastapi import FastAPI, File, UploadFile, Query
+from fastapi import FastAPI, File, UploadFile, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 # Import DiseaseEngine and AgroBotEngine packages
 from app.inference import DiseaseEngine
-from app.agrobot import AgroBotEngine
+from app.agrobot import AgroBotEngine, AgroBotProviderError
 from app.auth import router as auth_router
 from app.batches import router as batches_router
 
@@ -28,9 +28,9 @@ app.include_router(batches_router)
 
 
 class ChatRequest(BaseModel):
-    message: str
-    language: Optional[str] = "auto"  # "auto", "en", "bn"
-    diagnosis_context: Optional[str] = None
+    message: str = Field(min_length=1, max_length=4000)
+    language: Optional[str] = Field(default="auto", max_length=10)
+    diagnosis_context: Optional[str] = Field(default=None, max_length=200)
 
 
 @app.post("/predict")
@@ -69,7 +69,7 @@ async def predict_leaf(
 
 @app.post("/chat")
 async def chat_with_bot(req: ChatRequest):
-    """Bilingual conversational endpoint for agricultural advice."""
+    """Bilingual chat endpoint, preferring the configured hosted AI provider."""
     try:
         lang_pref = req.language if req.language in ("en", "bn") else None
         res = agrobot.answer_query(
@@ -78,12 +78,8 @@ async def chat_with_bot(req: ChatRequest):
             diagnosis_context=req.diagnosis_context
         )
         return res
-    except Exception as e:
-        return {
-            "ok": False,
-            "error": str(e),
-            "reply": "দুঃখিত, উত্তর দিতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।" if req.language == "bn" else "Sorry, an error occurred while processing your request. Please try again."
-        }
+    except AgroBotProviderError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
 
 
 @app.get("/chat/quick-topics")

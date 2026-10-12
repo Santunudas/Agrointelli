@@ -1,7 +1,7 @@
 """AgroBot - Bilingual Smart Farm Assistant Engine.
 
-Provides instant, farmer-friendly agronomic guidance in English and Bangla (বাংলা).
-Operates 100% offline using a comprehensive agricultural knowledge base covering
+Provides farmer-friendly agronomic guidance in English and Bangla (বাংলা).
+Uses Gemini or Groq when configured, with an offline knowledge base covering
 all 38 plant-disease classes from AgroIntelli, plus everyday farmer issues:
 - Rice, Potato, Tomato, Wheat, Mustard, Brinjal, and vegetable diseases & pests
 - Fertilizer dosages (Urea, DAP, Potash, Zinc, Boron, Compost)
@@ -16,10 +16,17 @@ all 38 plant-disease classes from AgroIntelli, plus everyday farmer issues:
 import os
 import re
 import json
+import logging
 import datetime
 import urllib.request
 import urllib.error
 from typing import Dict, List, Optional, Any, Tuple
+
+logger = logging.getLogger(__name__)
+
+
+class AgroBotProviderError(RuntimeError):
+    """An enabled hosted AI provider could not complete a chat request."""
 
 
 class AgroBotEngine:
@@ -665,6 +672,23 @@ class AgroBotEngine:
         q_clean = query.strip()
         q_lower = q_clean.lower()
 
+        llm_reply = self._try_llm_generation(q_clean, lang, diagnosis_context)
+        if llm_reply:
+            return {
+                "ok": True,
+                "reply": llm_reply,
+                "language": lang,
+                "category": "AI Farm Advisory",
+                "thinking_delay": 0,
+                "suggestions": [
+                    "ধানের মাজরা পোকা দমন" if lang == "bn" else "Rice stem borer remedies",
+                    "আলুর নাবি ধসা রোগ" if lang == "bn" else "Potato late blight control",
+                    "সারের সঠিক মাত্রা" if lang == "bn" else "Fertilizer dosage guide",
+                    "কিষাণ হেল্পলাইন নম্বর" if lang == "bn" else "Farmer helpline numbers"
+                ],
+                "helpline": "1800-180-1551 (IN) / 16123 (BD)"
+            }
+
         # 1. Direct class match or contextual question about diagnosis
         if diagnosis_context and any(w in q_lower for w in [
             "this", "diagnosis", "it", "disease", "cure", "help", "treatment", "medicine",
@@ -711,59 +735,127 @@ class AgroBotEngine:
                 diag_resp["thinking_delay"] = 2000
                 return diag_resp
 
-        # 8. Optional LLM invocation if an API key is available
-        llm_reply = self._try_llm_generation(query, lang)
-        if llm_reply:
-            return {
-                "ok": True,
-                "reply": llm_reply,
-                "language": lang,
-                "category": "Expert AI Advisory",
-                "thinking_delay": 2000,
-                "suggestions": [
-                    "ধানের মাজরা পোকা দমন" if lang == "bn" else "Rice stem borer remedies",
-                    "আলুর নাবি ধসা রোগ" if lang == "bn" else "Potato late blight control",
-                    "সারের সঠিক মাত্রা" if lang == "bn" else "Fertilizer dosage guide",
-                    "কিষাণ হেল্পলাইন নম্বর" if lang == "bn" else "Farmer helpline numbers"
-                ],
-                "helpline": "1800-180-1551 (IN) / 16123 (BD)"
-            }
-
-        # 9. Smart Fallback with guidance and quick prompts
+        # Smart offline fallback when no provider API key is configured.
         resp = self._build_smart_fallback(query, lang)
         resp["thinking_delay"] = 2000
         return resp
 
     # -------------------------------------------------------------------------
-    # Optional LLM Fallback (Gemini or Groq)
+    # Hosted LLM (Gemini or Groq), preferred when configured
     # -------------------------------------------------------------------------
-    def _try_llm_generation(self, query: str, lang: str) -> Optional[str]:
-        gemini_key = os.environ.get("GEMINI_API_KEY")
-        if gemini_key:
-            try:
-                system_prompt = (
-                    "You are AgroBot (কৃষি মিত্র), an empathetic, highly knowledgeable agricultural expert assistant. "
-                    "Your role is to give practical, actionable agronomy advice to farmers facing daily field challenges. "
-                    f"Respond strictly in {'natural Bengali (বাংলা)' if lang == 'bn' else 'clear English'}. "
-                    "Include organic/cultural practices first, then safe chemical solutions with exact doses if necessary, "
-                    "along with safety instructions. Keep the format clean with bullet points and friendly emojis."
-                )
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-                payload = {
-                    "contents": [
-                        {"role": "user", "parts": [{"text": f"{system_prompt}\n\nFarmer Query: {query}"}]}
-                    ],
-                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": 800}
-                }
-                data = json.dumps(payload).encode("utf-8")
-                req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-                with urllib.request.urlopen(req, timeout=7) as response:
-                    res_json = json.loads(response.read().decode("utf-8"))
-                    text = res_json["candidates"][0]["content"]["parts"][0]["text"]
-                    return text.strip()
-            except Exception:
-                pass
-        return None
+    def _try_llm_generation(
+        self,
+        query: str,
+        lang: str,
+        diagnosis_context: Optional[str] = None,
+    ) -> Optional[str]:
+        provider = os.environ.get("AGROBOT_PROVIDER", "gemini").strip().lower()
+        if provider == "gemini":
+            api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+            if not api_key:
+                return None
+            model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
+        elif provider == "groq":
+            api_key = os.environ.get("GROQ_API_KEY", "").strip()
+            if not api_key:
+                return None
+            model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
+        else:
+            raise AgroBotProviderError(
+                "Unsupported AGROBOT_PROVIDER. Choose 'gemini' or 'groq'."
+            )
+
+        if not model:
+            raise AgroBotProviderError(f"{provider.title()} model name is empty.")
+
+        system_prompt = (
+            "You are AgroBot (কৃষি মিত্র), a practical, kind agricultural assistant. "
+            "Answer only farming, crops, livestock, soil, irrigation, pests, and agricultural topics. "
+            "If the question is unrelated, briefly explain that you only help with agriculture. "
+            f"Reply only in {'natural Bengali (বাংলা)' if lang == 'bn' else 'clear English'}. "
+            "Give concise, actionable steps and ask a short follow-up question when important details are missing. "
+            "Do not invent pesticide or fertilizer doses, product approvals, diagnoses, or helpline details. "
+            "For chemical use, advise following the locally approved product label, protective equipment, "
+            "pre-harvest interval, and local agricultural-extension guidance. Prefer cultural and lower-risk "
+            "measures first. Make clear when an in-person expert or lab diagnosis is needed."
+        )
+        user_prompt = query
+        if diagnosis_context:
+            user_prompt = (
+                f"Current plant-image model result (a clue, not a confirmed diagnosis): "
+                f"{diagnosis_context}\n\nFarmer's question: {query}"
+            )
+
+        if provider == "gemini":
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{model}:generateContent"
+            )
+            payload = {
+                "systemInstruction": {"parts": [{"text": system_prompt}]},
+                "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 900},
+            }
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            }
+        else:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0.4,
+                "max_tokens": 900,
+            }
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
+
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=25) as response:
+                response_data = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            logger.warning("AgroBot %s provider returned HTTP %s", provider, error.code)
+            raise AgroBotProviderError(
+                f"{provider.title()} could not answer (HTTP {error.code}). "
+                "Check the API key, model name, and provider limits."
+            ) from error
+        except (urllib.error.URLError, TimeoutError) as error:
+            logger.warning("AgroBot %s provider connection failed: %s", provider, error)
+            raise AgroBotProviderError(
+                f"Could not connect to {provider.title()}. Check the server's internet connection and try again."
+            ) from error
+        except (UnicodeDecodeError, json.JSONDecodeError, KeyError, IndexError, TypeError) as error:
+            logger.warning("AgroBot %s provider returned an invalid response", provider)
+            raise AgroBotProviderError(
+                f"{provider.title()} returned an unreadable response. Please try again."
+            ) from error
+
+        try:
+            if provider == "gemini":
+                text = response_data["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                text = response_data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as error:
+            logger.warning("AgroBot %s provider response did not contain answer text", provider)
+            raise AgroBotProviderError(
+                f"{provider.title()} returned no answer. Please try again."
+            ) from error
+
+        if not isinstance(text, str) or not text.strip():
+            raise AgroBotProviderError(f"{provider.title()} returned an empty answer. Please try again.")
+        return text.strip()[:12000]
 
     # -------------------------------------------------------------------------
     # Disease Class Matcher

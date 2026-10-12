@@ -1,8 +1,8 @@
 # 🌿 AgroIntelli — AI Plant Disease Diagnostics & Bilingual Smart Farm Assistant
 
-> **Next-Gen Offline Plant Pathology AI + AgroBot (কৃষি মিত্র) — Bilingual Farming Advisor**
+> **Offline Plant Pathology AI + optional hosted AgroBot (কৃষি মিত্র) — Bilingual Farming Advisor**
 
-AgroIntelli is a fully offline, field-deployable plant disease diagnostic platform powered by a quantized **MobileNetV3-Small (TFLite)** deep learning backend, a **FastAPI** server, and a modern nature-themed **glassmorphism web UI**. It is now bundled with **AgroBot (কৃষি মিত্র)** — a bilingual (English & Bangla) smart farm assistant that provides instant agronomic advice, fertilizer dosages, pest management, and irrigation guidance — all without an internet connection.
+AgroIntelli is a field-deployable plant disease diagnostic platform powered by a quantized **MobileNetV3-Small (TFLite)** deep learning backend, a **FastAPI** server, and a modern nature-themed **glassmorphism web UI**. **AgroBot (কৃষি মিত্র)** is a bilingual English and Bangla farming assistant. It can use Gemini or Groq for generated conversational guidance when configured, or use its built-in responses offline.
 
 ---
 
@@ -165,7 +165,25 @@ The server trusts forwarded protocol headers only from loopback, where the local
 
 ## 🤖 AgroBot (কৃষি মিত্র) — Bilingual AI Farm Assistant
 
-AgroBot is a **fully offline, bilingual smart farming advisor** embedded in the AgroIntelli web UI. It auto-detects the user's language from Bangla script, Romanized Banglish keywords, or English and responds accordingly.
+AgroBot is a bilingual farming assistant embedded in the AgroIntelli web UI. When configured, it uses Gemini or Groq for conversational answers and passes the active plant diagnosis as context. Without a provider key, it retains the built-in offline guidance. Language can be selected or auto-detected from Bangla script, Romanized Banglish keywords, or English.
+
+### Configure a hosted free-tier model
+
+Gemini and Groq offer API access with provider-specific free quotas; availability, limits, and terms can change. Create a key with the provider, keep it in the server environment (never in browser JavaScript or source control), and choose one provider:
+
+```powershell
+# Google Gemini
+$env:AGROBOT_PROVIDER = "gemini"
+$env:GEMINI_API_KEY = "<your Gemini API key>"
+$env:GEMINI_MODEL = "gemini-2.5-flash" # Optional; this is the default.
+
+# Or Groq
+# $env:AGROBOT_PROVIDER = "groq"
+# $env:GROQ_API_KEY = "<your Groq API key>"
+# $env:GROQ_MODEL = "llama-3.3-70b-versatile" # Optional; override if your account uses another model.
+```
+
+Restart the server after setting the variables. With a key configured, the selected model answers before the old template/knowledge-base responses; if that provider is unavailable, AgroBot shows an error instead of silently presenting a canned answer. If no key is set, offline responses remain available. Provider keys and prompts are sent only from the backend to the selected provider. Review the provider's free-tier quota and data terms before use.
 
 ### AgroBot Capabilities
 
@@ -181,7 +199,7 @@ AgroBot is a **fully offline, bilingual smart farming advisor** embedded in the 
 | **Organic Bio-Pesticides** | Step-by-step preparation for Neem oil spray and Trichoderma application. |
 | **Weather Precautions** | Guidance for rain, storm, frost, and dense fog crop protection. |
 | **Helpline Numbers** | Official agricultural helplines — **1800-180-1551** (India) & **16123** (Bangladesh). |
-| **Optional LLM Integration** | Falls back to Gemini / Groq API if API keys are configured for complex queries. |
+| **Hosted AI Answers** | Uses the configured Gemini or Groq API before offline matching when a provider key is set; provider errors are shown instead of silently switching to canned answers. |
 | **Diagnosis Context Linking** | After a scan, AgroBot is automatically primed with the detected disease context for targeted step-by-step advice. |
 | **Quick Topic Chips** | One-tap action chips in both English and Bangla for common farming problems (Rice Stem Borer, Potato Blight, Fertilizer, Neem Spray, AWD Irrigation, Helplines, etc.). |
 | **Voice Input (Mic)** | Web Speech Recognition — ask questions by voice in Bangla or English. |
